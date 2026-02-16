@@ -93,17 +93,20 @@ def sample_data(n: int = 500, random_state: int = 42) -> pd.DataFrame:
     return df
 
 
-def prepare_real_data(df: pd.DataFrame) -> tuple:
+def prepare_real_data(df: Union[str, pd.DataFrame]) -> tuple:
     """
     Prepara os dados reais para o treinamento:
     - Realiza limpeza inicial e define target/features.
-    - Recebe um DataFrame já carregado.
+    - Recebe um DataFrame já carregado ou um filepath para carregar.
     
+    Args:
+        df: DataFrame carregado ou caminho do arquivo para carregar
+        
     Returns:
-        tuple: (features DataFrame, target Series)
+        tuple: (features DataFrame, target DataFrame)
     """
     if isinstance(df, str):
-        # Se receber um filepath por engano, carrega o arquivo
+        # Se receber um filepath, carrega o arquivo
         df = load_data(df)
     
     df = clean_data(df)

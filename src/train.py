@@ -37,7 +37,9 @@ def train_model(data_path: str, model_output_path: str, metrics_output_path: str
     # 2. Engenharia de Features (apenas nas features)
     X = create_features(X)
     
-    # Recombinar para seleção de features
+    # Nota: Recombinamos features e target temporariamente porque select_features()
+    # espera ter acesso à coluna target para garantir que ela seja preservada
+    # na ordem correta das colunas. Isso evita problemas de alinhamento posterior.
     data_combined = X.copy()
     data_combined['risk_label'] = y['risk_label'].values
     
