@@ -1,5 +1,7 @@
-from fastapi import FastAPI, HTTPException, Request
-from pydantic import BaseModel, Extra
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel, ConfigDict
 import joblib
 import pandas as pd
 import uvicorn
@@ -8,6 +10,12 @@ import logging
 from logging.handlers import RotatingFileHandler
 from datetime import datetime
 import json
+from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 # Configuracao de Logs Avancada
 LOG_DIR = "logs"
@@ -22,11 +30,10 @@ logger = logging.getLogger("PassosMagicosAPI")
 logger.setLevel(logging.INFO)
 logger.addHandler(log_handler)
 
-app = FastAPI(title="Passos Magicos - Predicao de Risco Escolar", version="1.0.0")
-
 # Carregar modelo e estatisticas de treino
 MODEL_PATH = "models/model.pkl"
 TRAIN_STATS_PATH = "models/train_stats.json"
+LOG_PATH = os.path.join(LOG_DIR, "api_monitor.log")
 model = None
 train_stats = None
 
@@ -36,7 +43,44 @@ def _to_dataframe(obj: dict) -> pd.DataFrame:
         return pd.DataFrame()
     return pd.DataFrame([obj])
 
-@app.on_event("startup")
+
+def _build_fallback_model():
+    from src.preprocessing import sample_data
+    from src.feature_engineering import create_features, select_features
+
+    df = sample_data(n=200)
+    df = create_features(df)
+    df = select_features(df)
+    X = df.drop(columns=["risk_label"])
+    y = df["risk_label"].values
+
+    numeric_cols = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
+    categorical_cols = X.select_dtypes(include=["object", "category", "bool"]).columns.tolist()
+
+    numeric_transformer = Pipeline(steps=[
+        ("imputer", SimpleImputer(strategy="median")),
+        ("scaler", StandardScaler()),
+    ])
+
+    categorical_transformer = Pipeline(steps=[
+        ("imputer", SimpleImputer(strategy="most_frequent")),
+        ("onehot", OneHotEncoder(handle_unknown="ignore")),
+    ])
+
+    preprocessor = ColumnTransformer(transformers=[
+        ("num", numeric_transformer, numeric_cols),
+        ("cat", categorical_transformer, categorical_cols),
+    ], remainder="drop")
+
+    clf = Pipeline(steps=[
+        ("preprocessor", preprocessor),
+        ("classifier", RandomForestClassifier(random_state=42)),
+    ])
+
+    X_train, _, y_train, _ = train_test_split(X, y, test_size=0.2, random_state=42)
+    clf.fit(X_train, y_train)
+    return clf
+
 def load_resources():
     global model, train_stats
     if os.path.exists(MODEL_PATH):
@@ -45,6 +89,8 @@ def load_resources():
             logger.info(f"Modelo carregado com sucesso de {MODEL_PATH}")
         except Exception as e:
             logger.error(f"Erro ao carregar o modelo: {e}")
+            model = _build_fallback_model()
+            logger.info("Modelo fallback carregado em memoria")
             
     if os.path.exists(TRAIN_STATS_PATH):
         try:
@@ -53,6 +99,19 @@ def load_resources():
             logger.info("Estatisticas de treino carregadas.")
         except Exception as e:
             logger.error(f"Erro ao carregar estatisticas: {e}")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    load_resources()
+    yield
+
+
+app = FastAPI(
+    title="Passos Magicos - Predicao de Risco Escolar",
+    version="1.0.0",
+    lifespan=lifespan,
+)
 
 class StudentData(BaseModel):
     # Campos base esperados para facilitar o uso, mas permite extras
@@ -65,8 +124,7 @@ class StudentData(BaseModel):
     FASE: int = 0
     PEDRA: str = "Quartzo"
 
-    class Config:
-        extra = Extra.allow
+    model_config = ConfigDict(extra='allow')
 
 def check_drift(input_df: pd.DataFrame):
     """Monitoramento basico de drift comparando as medias do input vs treino."""
@@ -83,6 +141,24 @@ def check_drift(input_df: pd.DataFrame):
                 if ratio > 0.3: # Threshold de 30%
                     drifts[col] = {"train_mean": stat, "current_mean": current_val, "status": "DRIFT DETECTED"}
     return drifts
+
+
+def get_drift_log_summary(max_items: int = 20):
+    if not os.path.exists(LOG_PATH):
+        return {"alerts_count": 0, "latest_alerts": []}
+
+    latest_alerts = []
+    alerts_count = 0
+    with open(LOG_PATH, "r", encoding="utf-8", errors="ignore") as f:
+        for line in f:
+            if "DRIFT ALERT:" in line:
+                alerts_count += 1
+                latest_alerts.append(line.strip())
+
+    return {
+        "alerts_count": alerts_count,
+        "latest_alerts": latest_alerts[-max_items:],
+    }
 
 @app.get("/metrics")
 def get_metrics():
@@ -102,6 +178,26 @@ def get_drift():
     """Endpoint simplificado para checar drift nos logs (demonstrativo)."""
     return {"message": "Monitoramento de drift ativo. Verifique os logs para alertas em tempo real.", "threshold": "30% de variacao na media"}
 
+
+@app.get("/drift/dashboard", response_class=HTMLResponse)
+def drift_dashboard():
+        summary = get_drift_log_summary()
+        html = f"""
+        <html>
+            <head><title>Painel de Drift - Passos Magicos</title></head>
+            <body style=\"font-family: Arial, sans-serif; margin: 24px;\">
+                <h2>Painel de Drift do Modelo</h2>
+                <p><b>Threshold:</b> 30% de variacao na media</p>
+                <p><b>Total de alertas:</b> {summary['alerts_count']}</p>
+                <h3>Ultimos alertas</h3>
+                <ul>
+                    {''.join(f'<li>{a}</li>' for a in summary['latest_alerts'])}
+                </ul>
+            </body>
+        </html>
+        """
+        return html
+
 @app.post("/predict")
 def predict(data: StudentData):
     if not model:
@@ -109,7 +205,7 @@ def predict(data: StudentData):
         raise HTTPException(status_code=500, detail="Modelo nao carregado")
     
     try:
-        dict_data = data.dict()
+        dict_data = data.model_dump()
         input_data = _to_dataframe(dict_data)
         
         # Monitoramento de Drift

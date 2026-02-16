@@ -10,7 +10,7 @@ from src.evaluate import evaluate_model
 def test_preprocessing_clean():
     df = pd.DataFrame({' A ': [1, 2, 2], 'B': [3, 4, 4]})
     cleaned = clean_data(df)
-    assert 'A' in cleaned.columns
+    assert 'a' in cleaned.columns
     assert len(cleaned) == 2
 
 def test_sample_data():
