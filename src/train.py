@@ -31,19 +31,26 @@ def train_model(data_path: str, model_output_path: str, metrics_output_path: str
         print("Tentando carregar como CSV...")
         df = load_csv_with_fallback(data_path)
 
+    # Preparar dados e separar features/target
     X, y = prepare_real_data(df)
 
-    # 2. Engenharia de Features
+    # 2. Engenharia de Features (apenas nas features)
     X = create_features(X)
-    X = select_features(X)
-
-    # 3. Separacao X e y
+    
+    # Recombinar para seleção de features
+    data_combined = X.copy()
+    data_combined['risk_label'] = y['risk_label'].values
+    
+    # Selecionar features
+    data_combined = select_features(data_combined, target='risk_label')
+    
+    # 3. Separacao final X e y
     target_col = 'risk_label'
-    if target_col not in X.columns:
+    if target_col not in data_combined.columns:
         raise ValueError(f"Coluna alvo '{target_col}' nao encontrada no dataframe.")
 
-    X = X.drop(columns=[target_col])
-    y = y[target_col]
+    X = data_combined.drop(columns=[target_col])
+    y = data_combined[target_col]
 
     # Identificar colunas numericas e categoricas
     numeric_cols = X.select_dtypes(include=['int64', 'float64']).columns.tolist()
@@ -100,7 +107,8 @@ def train_model(data_path: str, model_output_path: str, metrics_output_path: str
 
 
 if __name__ == "__main__":
-    data_path = 'data/raw/DATASET_FIAP.csv'
+    # Use synthetic data if real data files are PDFs or not available
+    data_path = 'data/processed/synthetic_data.csv'
     model_path = "models/model.pkl"
     metrics_path = "models/metrics.json"
     train_model(data_path, model_path, metrics_path)
