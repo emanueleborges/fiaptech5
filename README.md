@@ -87,8 +87,42 @@ Para facilitar a execução e testes, a aplicação conta com uma interface nati
 2. Acesse no navegador: **`http://localhost:8000/docs`**
 3. Você verá uma interface interativa para testar o endpoint `/predict` sem precisar de código.
 
-#### Via Terminal (cURL)
-**Endpoint:** `POST /predict`
+#### Endpoints Disponíveis
+
+**1. Health Check:** `GET /health`
+```bash
+curl http://localhost:8000/health
+```
+Resposta:
+```json
+{
+  "status": "healthy",
+  "model_loaded": true,
+  "timestamp": "2026-02-16T19:00:00.000000"
+}
+```
+
+**2. Métricas do Modelo:** `GET /metrics`
+```bash
+curl http://localhost:8000/metrics
+```
+Resposta:
+```json
+{
+  "accuracy": 0.995,
+  "precision": 0.989,
+  "recall": 1.0,
+  "f1": 0.994,
+  "roc_auc": 1.0
+}
+```
+
+**3. Monitoramento de Drift:** `GET /drift`
+```bash
+curl http://localhost:8000/drift
+```
+
+**4. Predição de Risco:** `POST /predict`
 
 **Exemplo com cURL:**
 ```bash
@@ -97,17 +131,34 @@ curl -X 'POST' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
-  "nota_matematica": 7.5,
-  "frequencia": 0.95
+  "INDE": 7.5,
+  "IDA": 8.0,
+  "IEG": 7.0,
+  "IAA": 8.5,
+  "IPS": 7.0,
+  "IPP": 7.5,
+  "FASE": 2,
+  "PEDRA": "Ametista"
 }'
 ```
 
 **Exemplo de Resposta:**
 ```json
 {
-  "prediction": 0
+  "prediction": 0,
+  "drift_alerts": {}
 }
 ```
+
+**Parâmetros esperados:**
+- `INDE`: Índice do Desenvolvimento Educacional (0-10)
+- `IDA`: Indicador de Aprendizagem (0-10)
+- `IEG`: Indicador de Engajamento (0-10)
+- `IAA`: Indicador de Autoavaliação (0-10)
+- `IPS`: Indicador Psicossocial (0-10)
+- `IPP`: Indicador Psicopedagógico (0-10)
+- `FASE`: Fase do aluno (0-7)
+- `PEDRA`: Classificação (Quartzo, Ametista, Topázio, Brilhante)
 
 ### 5) Etapas do Pipeline de Machine Learning
 
@@ -115,3 +166,60 @@ curl -X 'POST' \
 2.  **Engenharia de Features (`src/feature_engineering.py`):** Criação de novas variáveis baseadas em histórico acadêmico e indicadores socioeconômicos.
 3.  **Treinamento (`src/train.py`):** Divisão de treino/teste, treinamento de um classificador (Random Forest) e serialização do modelo em `.pkl`.
 4.  **Avaliação (`src/evaluate.py`):** Geração de métricas como Acurácia, Precision, Recall e F1-Score.
+
+### 6) Testes Unitários e Cobertura
+
+O projeto implementa testes unitários abrangentes para garantir a qualidade do código.
+
+**Executar os testes:**
+```bash
+pytest
+```
+
+**Verificar cobertura de código:**
+```bash
+pytest --cov=src --cov=api --cov-report=term-missing
+```
+
+**Cobertura atual:** 84% (supera o requisito mínimo de 80%)
+
+Os testes cobrem:
+- Endpoints da API (health, metrics, drift, predict)
+- Pipeline de pré-processamento
+- Engenharia de features
+- Treinamento e avaliação do modelo
+- Detecção de drift
+
+### 7) Monitoramento Contínuo
+
+O sistema implementa as seguintes funcionalidades de monitoramento:
+
+**Logs Avançados:**
+- Sistema de logging com rotação automática de arquivos
+- Localização: `logs/api_monitor.log`
+- Registra todas as predições, erros e alertas de drift
+- Formato: timestamp, nível, mensagem
+
+**Detecção de Drift:**
+- Monitoramento automático de desvio nas distribuições de entrada
+- Comparação das médias dos dados de entrada vs. dados de treinamento
+- Alerta quando a variação excede 30%
+- Disponível via endpoint `/drift` e nos logs
+
+**Métricas de Performance:**
+- Endpoint `/metrics` retorna métricas de avaliação do modelo
+- Métricas incluem: accuracy, precision, recall, F1-score, ROC-AUC
+- Armazenadas em `models/metrics.json`
+
+### 8) Dados e Modelo
+
+**Dados de Treinamento:**
+- O projeto utiliza dados sintéticos gerados baseados nos indicadores da Passos Mágicos
+- Dados gerados em `data/processed/synthetic_data.csv`
+- 1000 amostras com distribuições realistas
+
+**Modelo Treinado:**
+- Algoritmo: Random Forest Classifier
+- Pipeline completo com pré-processamento integrado
+- Localização: `models/model.pkl`
+- Métricas de performance: >99% de acurácia no conjunto de teste
