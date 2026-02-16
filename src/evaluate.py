@@ -1,63 +1,27 @@
-import joblib
-import pandas as pd
 import json
-import os
-from sklearn.metrics import classification_report, accuracy_score, f1_score, recall_score, precision_score
+from typing import Dict
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 
-def evaluate_model(model_path: str, test_data_path: str, metrics_output_path: str = "metrics.json"):
-    """Avalia o modelo treinado com metricas padrao e salva em arquivo."""
-    
-    # Carregar modelo
-    if not os.path.exists(model_path):
-        print(f"Modelo nao encontrado em {model_path}")
-        return
 
-    model = joblib.load(model_path)
-    
-    # Carregar dados de teste
-    if not os.path.exists(test_data_path):
-        print(f"Dados de teste nao encontrados em {test_data_path}")
-        return
+def evaluate_model(pipeline, X_test, y_test) -> Dict:
+    """Calcula métricas básicas de classificação e retorna um dicionário.
 
-    df = pd.read_csv(test_data_path)
-    
-    # Separar X e y (AJUSTAR: Deve corresponder as colunas usadas no treino)
-    target_col = 'risk_label' # Placeholder - Alterar para a coluna real (ex: 'PONTO_VIRADA', 'INDE')
-    
-    if target_col not in df.columns:
-        print(f"Coluna alvo '{target_col}' nao encontrada no dataset de teste.")
-        return
-
-    X_test = df.drop(columns=[target_col])
-    y_test = df[target_col]
-    
-    # Predicoes
-    predictions = model.predict(X_test)
-    
-    # Calculo de Metricas
-    acc = accuracy_score(y_test, predictions)
-    f1 = f1_score(y_test, predictions, average='weighted')
-    recall = recall_score(y_test, predictions, average='weighted')
-    precision = precision_score(y_test, predictions, average='weighted')
-    
+    Se o problema for binário, calcula também AUC quando disponível.
+    """
+    y_pred = pipeline.predict(X_test)
     metrics = {
-        "accuracy": acc,
-        "f1_score": f1,
-        "recall": recall,
-        "precision": precision
+        'accuracy': float(accuracy_score(y_test, y_pred)),
+        'precision': float(precision_score(y_test, y_pred, zero_division=0)),
+        'recall': float(recall_score(y_test, y_pred, zero_division=0)),
+        'f1': float(f1_score(y_test, y_pred, zero_division=0)),
     }
 
-    # Exibir no Console
-    print("=== Relatorio de Avaliacao ===")
-    print(f"Acuracia: {acc:.4f}")
-    print(f"F1-Score: {f1:.4f}")
-    print("\nRelatorio Detalhado:\n", classification_report(y_test, predictions))
-    
-    # Salvar metricas
-    with open(metrics_output_path, 'w') as f:
-        json.dump(metrics, f, indent=4)
-    print(f"Metricas salvas em {metrics_output_path}")
+    # Tentar AUC se o estimator tiver predict_proba
+    try:
+        if hasattr(pipeline, 'predict_proba') or hasattr(pipeline.named_steps.get('classifier'), 'predict_proba'):
+            y_proba = pipeline.predict_proba(X_test)[:, 1]
+            metrics['roc_auc'] = float(roc_auc_score(y_test, y_proba))
+    except Exception:
+        pass
 
-if __name__ == "__main__":
-    evaluate_model("models/model.pkl", "data/processed/test_data.csv")
-
+    return metrics

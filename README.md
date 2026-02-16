@@ -1,19 +1,19 @@
-# Passos Mágicos - Datathon
-## Predição de Risco de Defasagem Escolar
+# Datathon: Case Passos Mágicos - Previsão de Risco de Defasagem Escolar
 
-### 1) Visão Geral do Projeto
-**Objetivo:** Este projeto visa desenvolver um modelo preditivo para estimar o risco de defasagem escolar de estudantes atendidos pela Associação Passos Mágicos. O objetivo é permitir que a instituição atue preventivamente, oferecendo suporte personalizado para evitar a evasão e melhorar o desempenho dos alunos.
+Este projeto faz parte do Datathon da Pós-Tech em Machine Learning Engineering da FIAP. O objetivo é desenvolver um modelo preditivo capaz de estimar o risco de defasagem escolar de estudantes da Associação Passos Mágicos, utilizando técnicas de MLOps para garantir um ciclo de vida completo e monitorável.
 
-**Solução Proposta:** Construção de uma pipeline completa de Machine Learning, modularizada e encapsulada, que vai desde o pré-processamento dos dados até o deploy de uma API para consumo do modelo em produção.
+## 1. Visão Geral do Projeto
+**Objetivo:** Identificar precocemente estudantes em vulnerabilidade educacional (risco de defasagem). O modelo utiliza dados socioeconômicos e de desempenho para classificar o risco, permitindo intervenções pedagógicas mais assertivas.
+
+**Solução Proposta:** Uma pipeline automatizada que abrange pré-processamento, engenharia de features, treinamento via scikit-learn, API FastAPI e containerização Docker.
 
 **Stack Tecnológica:**
-*   **Linguagem:** Python 3.9+
-*   **Frameworks de ML:** scikit-learn, pandas, numpy
-*   **API:** FastAPI
-*   **Serialização:** joblib
-*   **Testes:** pytest
-*   **Empacotamento:** Docker
-*   **Monitoramento:** Logging básico configurado
+*   **Linguagem:** Python 3.9
+*   **ML Frameworks:** scikit-learn, pandas, numpy
+*   **API:** FastAPI + Uvicorn
+*   **Testes:** pytest + pytest-cov
+*   **Containerização:** Docker
+*   **Monitoramento:** Logging nativo + Endpoint de métricas
 
 ### 2) Estrutura do Projeto (Diretórios e Arquivos)
 
