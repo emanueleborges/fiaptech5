@@ -137,3 +137,84 @@
 2026-02-16 14:59:22,224 - PassosMagicosAPI - WARNING - DRIFT ALERT: {'INDE': {'train_mean': 6.987963565416031, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IAA': {'train_mean': 7.999132940680636, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IEG': {'train_mean': 7.577402224525838, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IPS': {'train_mean': 7.0758707199493935, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IPP': {'train_mean': 7.173475796728871, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IDA': {'train_mean': 6.499824831423314, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'FASE': {'train_mean': 3.651595744680851, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}}
 2026-02-16 14:59:22,237 - PassosMagicosAPI - INFO - Input: {'INDE': 0.0, 'IDA': 0.0, 'IEG': 0.0, 'IAA': 0.0, 'IPS': 0.0, 'IPP': 0.0, 'FASE': 0, 'PEDRA': 'Quartzo', 'nota_matematica': 85.0, 'nota_portugues': 90.0, 'frequencia': 95.0, 'idade': 12, 'turma': 'A'} | Prediction: 1
 2026-02-16 14:59:22,247 - PassosMagicosAPI - ERROR - Tentativa de predicao sem modelo carregado
+2026-02-16 19:06:27,440 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:06:27,453 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:06:27,459 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:06:27,465 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:06:27,468 - PassosMagicosAPI - ERROR - Tentativa de predicao sem modelo carregado
+2026-02-16 19:06:27,597 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:06:27,599 - PassosMagicosAPI - ERROR - Tentativa de predicao sem modelo carregado
+2026-02-16 19:06:27,844 - PassosMagicosAPI - ERROR - Tentativa de predicao sem modelo carregado
+2026-02-16 19:06:27,853 - PassosMagicosAPI - ERROR - Tentativa de predicao sem modelo carregado
+2026-02-16 19:08:49,705 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:08:49,706 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:08:49,731 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:08:49,731 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:08:49,755 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:08:49,755 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:08:49,778 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:08:49,778 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:08:49,781 - PassosMagicosAPI - WARNING - DRIFT ALERT: {'INDE': {'train_mean': 7.017245782898516, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IAA': {'train_mean': 8.075872034750942, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IEG': {'train_mean': 7.5162522493349835, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IPS': {'train_mean': 6.962653127992371, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IPP': {'train_mean': 7.104464801583178, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IDA': {'train_mean': 6.367810125039869, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'FASE': {'train_mean': 3.5786736020806242, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}}
+2026-02-16 19:08:49,794 - PassosMagicosAPI - INFO - Input: {'INDE': 1.0, 'IDA': 1.0, 'IEG': 1.0, 'IAA': 1.0, 'IPS': 1.0, 'IPP': 1.0, 'FASE': 0, 'PEDRA': 'Quartzo'} | Prediction: 1
+2026-02-16 19:08:49,817 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:08:49,817 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:08:49,819 - PassosMagicosAPI - WARNING - DRIFT ALERT: {'FASE': {'train_mean': 3.5786736020806242, 'current_mean': 2.0, 'status': 'DRIFT DETECTED'}}
+2026-02-16 19:08:49,831 - PassosMagicosAPI - INFO - Input: {'INDE': 7.5, 'IDA': 8.0, 'IEG': 7.0, 'IAA': 8.5, 'IPS': 7.0, 'IPP': 7.5, 'FASE': 2, 'PEDRA': 'Ametista'} | Prediction: 0
+2026-02-16 19:08:50,034 - PassosMagicosAPI - WARNING - DRIFT ALERT: {'INDE': {'train_mean': 7.017245782898516, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IAA': {'train_mean': 8.075872034750942, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IEG': {'train_mean': 7.5162522493349835, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IPS': {'train_mean': 6.962653127992371, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IPP': {'train_mean': 7.104464801583178, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IDA': {'train_mean': 6.367810125039869, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'FASE': {'train_mean': 3.5786736020806242, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}}
+2026-02-16 19:08:50,045 - PassosMagicosAPI - INFO - Input: {'INDE': 0.0, 'IDA': 0.0, 'IEG': 0.0, 'IAA': 0.0, 'IPS': 0.0, 'IPP': 0.0, 'FASE': 0, 'PEDRA': 'Quartzo', 'nota_matematica': 85.0, 'nota_portugues': 90.0, 'frequencia': 95.0, 'idade': 12, 'turma': 'A'} | Prediction: 1
+2026-02-16 19:08:50,050 - PassosMagicosAPI - ERROR - Tentativa de predicao sem modelo carregado
+2026-02-16 19:09:10,328 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:09:10,329 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:09:10,391 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:09:10,391 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:09:10,445 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:09:10,445 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:09:10,498 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:09:10,499 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:09:10,504 - PassosMagicosAPI - WARNING - DRIFT ALERT: {'INDE': {'train_mean': 7.017245782898516, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IAA': {'train_mean': 8.075872034750942, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IEG': {'train_mean': 7.5162522493349835, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IPS': {'train_mean': 6.962653127992371, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IPP': {'train_mean': 7.104464801583178, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IDA': {'train_mean': 6.367810125039869, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'FASE': {'train_mean': 3.5786736020806242, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}}
+2026-02-16 19:09:10,537 - PassosMagicosAPI - INFO - Input: {'INDE': 1.0, 'IDA': 1.0, 'IEG': 1.0, 'IAA': 1.0, 'IPS': 1.0, 'IPP': 1.0, 'FASE': 0, 'PEDRA': 'Quartzo'} | Prediction: 1
+2026-02-16 19:09:10,598 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:09:10,599 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:09:10,602 - PassosMagicosAPI - WARNING - DRIFT ALERT: {'FASE': {'train_mean': 3.5786736020806242, 'current_mean': 2.0, 'status': 'DRIFT DETECTED'}}
+2026-02-16 19:09:10,629 - PassosMagicosAPI - INFO - Input: {'INDE': 7.5, 'IDA': 8.0, 'IEG': 7.0, 'IAA': 8.5, 'IPS': 7.0, 'IPP': 7.5, 'FASE': 2, 'PEDRA': 'Ametista'} | Prediction: 0
+2026-02-16 19:09:11,086 - PassosMagicosAPI - WARNING - DRIFT ALERT: {'INDE': {'train_mean': 7.017245782898516, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IAA': {'train_mean': 8.075872034750942, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IEG': {'train_mean': 7.5162522493349835, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IPS': {'train_mean': 6.962653127992371, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IPP': {'train_mean': 7.104464801583178, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IDA': {'train_mean': 6.367810125039869, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'FASE': {'train_mean': 3.5786736020806242, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}}
+2026-02-16 19:09:11,110 - PassosMagicosAPI - INFO - Input: {'INDE': 0.0, 'IDA': 0.0, 'IEG': 0.0, 'IAA': 0.0, 'IPS': 0.0, 'IPP': 0.0, 'FASE': 0, 'PEDRA': 'Quartzo', 'nota_matematica': 85.0, 'nota_portugues': 90.0, 'frequencia': 95.0, 'idade': 12, 'turma': 'A'} | Prediction: 1
+2026-02-16 19:09:11,120 - PassosMagicosAPI - ERROR - Tentativa de predicao sem modelo carregado
+2026-02-16 19:11:25,191 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:11:25,191 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:11:35,765 - PassosMagicosAPI - WARNING - DRIFT ALERT: {'FASE': {'train_mean': 3.5786736020806242, 'current_mean': 2.0, 'status': 'DRIFT DETECTED'}}
+2026-02-16 19:11:35,779 - PassosMagicosAPI - INFO - Input: {'INDE': 7.5, 'IDA': 8.0, 'IEG': 7.0, 'IAA': 8.5, 'IPS': 7.0, 'IPP': 7.5, 'FASE': 2, 'PEDRA': 'Ametista'} | Prediction: 0
+2026-02-16 19:12:34,051 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:12:34,052 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:12:34,114 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:12:34,115 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:12:34,169 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:12:34,169 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:12:34,230 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:12:34,230 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:12:34,236 - PassosMagicosAPI - WARNING - DRIFT ALERT: {'INDE': {'train_mean': 7.017245782898516, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IAA': {'train_mean': 8.075872034750942, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IEG': {'train_mean': 7.5162522493349835, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IPS': {'train_mean': 6.962653127992371, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IPP': {'train_mean': 7.104464801583178, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IDA': {'train_mean': 6.367810125039869, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'FASE': {'train_mean': 3.5786736020806242, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}}
+2026-02-16 19:12:34,265 - PassosMagicosAPI - INFO - Input: {'INDE': 1.0, 'IDA': 1.0, 'IEG': 1.0, 'IAA': 1.0, 'IPS': 1.0, 'IPP': 1.0, 'FASE': 0, 'PEDRA': 'Quartzo'} | Prediction: 1
+2026-02-16 19:12:34,320 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:12:34,321 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:12:34,325 - PassosMagicosAPI - WARNING - DRIFT ALERT: {'FASE': {'train_mean': 3.5786736020806242, 'current_mean': 2.0, 'status': 'DRIFT DETECTED'}}
+2026-02-16 19:12:34,350 - PassosMagicosAPI - INFO - Input: {'INDE': 7.5, 'IDA': 8.0, 'IEG': 7.0, 'IAA': 8.5, 'IPS': 7.0, 'IPP': 7.5, 'FASE': 2, 'PEDRA': 'Ametista'} | Prediction: 0
+2026-02-16 19:12:34,815 - PassosMagicosAPI - WARNING - DRIFT ALERT: {'INDE': {'train_mean': 7.017245782898516, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IAA': {'train_mean': 8.075872034750942, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IEG': {'train_mean': 7.5162522493349835, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IPS': {'train_mean': 6.962653127992371, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IPP': {'train_mean': 7.104464801583178, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IDA': {'train_mean': 6.367810125039869, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'FASE': {'train_mean': 3.5786736020806242, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}}
+2026-02-16 19:12:34,839 - PassosMagicosAPI - INFO - Input: {'INDE': 0.0, 'IDA': 0.0, 'IEG': 0.0, 'IAA': 0.0, 'IPS': 0.0, 'IPP': 0.0, 'FASE': 0, 'PEDRA': 'Quartzo', 'nota_matematica': 85.0, 'nota_portugues': 90.0, 'frequencia': 95.0, 'idade': 12, 'turma': 'A'} | Prediction: 1
+2026-02-16 19:12:34,851 - PassosMagicosAPI - ERROR - Tentativa de predicao sem modelo carregado
+2026-02-16 19:13:33,618 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:13:33,619 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:13:33,645 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:13:33,646 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:13:33,671 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:13:33,671 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:13:33,694 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:13:33,695 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:13:33,698 - PassosMagicosAPI - WARNING - DRIFT ALERT: {'INDE': {'train_mean': 7.017245782898516, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IAA': {'train_mean': 8.075872034750942, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IEG': {'train_mean': 7.5162522493349835, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IPS': {'train_mean': 6.962653127992371, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IPP': {'train_mean': 7.104464801583178, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'IDA': {'train_mean': 6.367810125039869, 'current_mean': 1.0, 'status': 'DRIFT DETECTED'}, 'FASE': {'train_mean': 3.5786736020806242, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}}
+2026-02-16 19:13:33,710 - PassosMagicosAPI - INFO - Input: {'INDE': 1.0, 'IDA': 1.0, 'IEG': 1.0, 'IAA': 1.0, 'IPS': 1.0, 'IPP': 1.0, 'FASE': 0, 'PEDRA': 'Quartzo'} | Prediction: 1
+2026-02-16 19:13:33,732 - PassosMagicosAPI - INFO - Modelo carregado com sucesso de models/model.pkl
+2026-02-16 19:13:33,733 - PassosMagicosAPI - INFO - Estatisticas de treino carregadas.
+2026-02-16 19:13:33,735 - PassosMagicosAPI - WARNING - DRIFT ALERT: {'FASE': {'train_mean': 3.5786736020806242, 'current_mean': 2.0, 'status': 'DRIFT DETECTED'}}
+2026-02-16 19:13:33,746 - PassosMagicosAPI - INFO - Input: {'INDE': 7.5, 'IDA': 8.0, 'IEG': 7.0, 'IAA': 8.5, 'IPS': 7.0, 'IPP': 7.5, 'FASE': 2, 'PEDRA': 'Ametista'} | Prediction: 0
+2026-02-16 19:13:33,955 - PassosMagicosAPI - WARNING - DRIFT ALERT: {'INDE': {'train_mean': 7.017245782898516, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IAA': {'train_mean': 8.075872034750942, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IEG': {'train_mean': 7.5162522493349835, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IPS': {'train_mean': 6.962653127992371, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IPP': {'train_mean': 7.104464801583178, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'IDA': {'train_mean': 6.367810125039869, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}, 'FASE': {'train_mean': 3.5786736020806242, 'current_mean': 0.0, 'status': 'DRIFT DETECTED'}}
+2026-02-16 19:13:33,966 - PassosMagicosAPI - INFO - Input: {'INDE': 0.0, 'IDA': 0.0, 'IEG': 0.0, 'IAA': 0.0, 'IPS': 0.0, 'IPP': 0.0, 'FASE': 0, 'PEDRA': 'Quartzo', 'nota_matematica': 85.0, 'nota_portugues': 90.0, 'frequencia': 95.0, 'idade': 12, 'turma': 'A'} | Prediction: 1
+2026-02-16 19:13:33,972 - PassosMagicosAPI - ERROR - Tentativa de predicao sem modelo carregado

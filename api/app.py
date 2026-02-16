@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Request
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel, ConfigDict
 import joblib
 import pandas as pd
 import uvicorn
@@ -65,8 +65,7 @@ class StudentData(BaseModel):
     FASE: int = 0
     PEDRA: str = "Quartzo"
 
-    class Config:
-        extra = Extra.allow
+    model_config = ConfigDict(extra='allow')
 
 def check_drift(input_df: pd.DataFrame):
     """Monitoramento basico de drift comparando as medias do input vs treino."""
@@ -109,7 +108,7 @@ def predict(data: StudentData):
         raise HTTPException(status_code=500, detail="Modelo nao carregado")
     
     try:
-        dict_data = data.dict()
+        dict_data = data.model_dump()
         input_data = _to_dataframe(dict_data)
         
         # Monitoramento de Drift
