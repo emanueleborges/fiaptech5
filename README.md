@@ -78,12 +78,12 @@ flowchart LR
         K --> L["Predição<br/>prediction + label"]
         I --> M["check_drift<br/>usa train_stats.json"]
         M --> N["Logs estruturados<br/>logs/api_monitor.log"]
-        N --> O[/drift/dashboard]
+        N --> O["/drift/dashboard"]
     end
 
-    E -.-> K
-    G -.-> M
-    F -.-> I
+    E --> K
+    G --> M
+    F --> I
 ```
 ### Executando com Docker (Recomendado)
 
