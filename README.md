@@ -62,22 +62,22 @@ fiaptech5/
 
 ```mermaid
 flowchart LR
-    subgraph Offline[Pipeline de Treinamento (offline)]
-        A[Dados brutos\n(data/raw/*.csv)] --> B[preprocessing.py\nlimpeza e preparo]
-        B --> C[feature_engineering.py\ncriação/seleção de features]
-        C --> D[train.py\ntrain_model]
-        D --> E[model.pkl\nmodels/model.pkl]
-        D --> F[metrics.json\nmodels/metrics.json]
-        D --> G[train_stats.json\nmodels/train_stats.json]
+    subgraph Offline
+        A["Dados brutos<br/>data/raw/*.csv"] --> B["preprocessing.py<br/>limpeza e preparo"]
+        B --> C["feature_engineering.py<br/>criação/seleção de features"]
+        C --> D["train.py<br/>train_model"]
+        D --> E["model.pkl<br/>models/model.pkl"]
+        D --> F["metrics.json<br/>models/metrics.json"]
+        D --> G["train_stats.json<br/>models/train_stats.json"]
     end
 
-    subgraph Online[Pipeline de Serviço (API em tempo real)]
-        H[Cliente\n(cURL, Postman, Frontend)] --> I[app.py\nFastAPI /predict]
-        I --> J[create_features / select_features\nfeature_engineering.py]
-        J --> K[Modelo carregado\nmodel.pkl]
-        K --> L[Predição\nprediction + label]
-        I --> M[check_drift\nusa train_stats.json]
-        M --> N[Logs estruturados\nlogs/api_monitor.log]
+    subgraph Online
+        H["Cliente<br/>(cURL, Postman, Frontend)"] --> I["app.py<br/>FastAPI /predict"]
+        I --> J["create_features / select_features<br/>feature_engineering.py"]
+        J --> K["Modelo carregado<br/>model.pkl"]
+        K --> L["Predição<br/>prediction + label"]
+        I --> M["check_drift<br/>usa train_stats.json"]
+        M --> N["Logs estruturados<br/>logs/api_monitor.log"]
         N --> O[/drift/dashboard]
     end
 
@@ -85,15 +85,6 @@ flowchart LR
     G -.-> M
     F -.-> I
 ```
-
-## 3) Instruções de Deploy (como subir o ambiente)
-
-### Pré-requisitos
-
-- Python 3.9+
-- pip
-- Docker (opcional para execução containerizada)
-
 ### Executando com Docker (Recomendado)
 
 1.  **Construir a imagem:**
