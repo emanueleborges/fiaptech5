@@ -1,112 +1,163 @@
-import sys
 import os
+import sys
+from pathlib import Path
 
-# Adiciona a raiz do projeto ao PYTHONPATH para resolver importacoes 'src'
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Garante que o diretório raiz do projeto esteja no sys.path
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 import joblib
 import json
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.pipeline import Pipeline
+import pandas as pd
 from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from src.preprocessing import sample_data, prepare_real_data, load_csv_with_fallback, extract_data_from_pdf
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+from src.preprocessing import load_data, sample_data, prepare_real_data
 from src.feature_engineering import create_features, select_features
+from src.evaluate import evaluate_model
 
 
-def train_model(data_path: str, model_output_path: str, metrics_output_path: str = "models/metrics.json"):
-    """Pipeline principal de treinamento. Salva o pipeline completo com transformacoes.
+def train_model(
+    data_path: str = None,
+    model_output_path: str = "models/model.pkl",
+    metrics_output_path: str = "models/metrics.json",
+    train_stats_output_path: str = "models/train_stats.json",
+):
+    """Treina o modelo conforme pipeline descrita no README.
 
-    - Cria um ColumnTransformer para colunas numéricas e categóricas
-    - Salva o pipeline (transformer + estimator) em `model_output_path`
-    - Salva métricas em `metrics_output_path`
+    - Carrega dados de `data_path` (CSV) ou gera dataset sintético com sample_data
+    - Aplica engenharia de features (create_features/select_features)
+    - Faz split treino/teste
+    - Treina RandomForest com ColumnTransformer
+    - Salva modelo, métricas e estatísticas de treino
     """
-    # 1. Carregar e preparar dados reais (com fallback sintético)
-    try:
-        if data_path.endswith('.pdf'):
-            print("Detectado arquivo PDF. Extraindo dados...")
-            df = extract_data_from_pdf(data_path)
-            X, y = prepare_real_data(df)
-        else:
-            print("Tentando carregar como CSV...")
-            X, y = prepare_real_data(data_path)
-    except Exception as e:
-        print(f"Falha ao usar dados reais ({e}). Usando dados sintéticos para continuidade.")
-        synthetic_df = sample_data(n=500)
-        y = synthetic_df['risk_label']
-        X = synthetic_df.drop(columns=['risk_label'])
 
-    # 2. Engenharia de Features
-    X = create_features(X)
-    X = select_features(X)
+    print("=" * 60)
+    print("🚀 TREINAMENTO - PASSOS MÁGICOS")
+    print("=" * 60)
 
-    # 3. Garantir formato de target
-    if hasattr(y, "values"):
-        y = y.values
+    # 1) Carregar dados brutos ou sintéticos
+    if data_path:
+        print(f"📥 Carregando dados de {data_path}...")
+        df = load_data(data_path)
+    else:
+        print("📥 Nenhum caminho informado, usando dataset sintético...")
+        df = sample_data(1000)
 
-    # Identificar colunas numericas e categoricas
-    numeric_cols = X.select_dtypes(include=['int64', 'float64']).columns.tolist()
-    categorical_cols = X.select_dtypes(include=['object', 'category', 'bool']).columns.tolist()
+    # Se já houver coluna de alvo, usamos diretamente; caso contrário, preparamos
+    if "risk_label" in df.columns:
+        print("🎯 Usando coluna 'risk_label' já presente nos dados")
+        df = create_features(df)
+        df = select_features(df)
+        X = df.drop(columns=["risk_label"])
+        y = df["risk_label"].values
+    else:
+        print("🎯 Preparando dados reais a partir de colunas de indicadores")
+        X_raw, y_series = prepare_real_data(df)
+        X = create_features(X_raw)
+        X = select_features(X, target=None)
+        y = y_series.values
 
-    # 5. Definir transformadores
-    numeric_transformer = Pipeline(steps=[
-        ('imputer', SimpleImputer(strategy='median')),
-        ('scaler', StandardScaler())
-    ])
+    print(f"\n📊 Dados para modelagem:")
+    print(f"   Features: {X.shape}")
+    print(f"   Target: {pd.Series(y).value_counts().to_dict()}")
 
-    categorical_transformer = Pipeline(steps=[
-        ('imputer', SimpleImputer(strategy='most_frequent')),
-        ('onehot', OneHotEncoder(handle_unknown='ignore'))
-    ])
+    # 2) Split treino/teste
+    # Para conjuntos muito pequenos (ex.: apenas 1 amostra por classe),
+    # a estratificação do scikit-learn falha. Nesses casos, fazemos split simples.
+    value_counts = pd.Series(y).value_counts()
+    can_stratify = len(value_counts) > 1 and value_counts.min() >= 2
 
-    preprocessor = ColumnTransformer(transformers=[
-        ('num', numeric_transformer, numeric_cols),
-        ('cat', categorical_transformer, categorical_cols)
-    ], remainder='drop')
+    stratify = y if can_stratify else None
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=stratify
+    )
 
-    # 6. Pipeline completo
-    clf = Pipeline(steps=[('preprocessor', preprocessor),
-                          ('classifier', RandomForestClassifier(random_state=42))])
+    print(f"\n📊 Split:")
+    print(f"   Treino: {len(X_train)}")
+    print(f"   Teste: {len(X_test)}")
 
-    # 7. Split train/test
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # 3) Construir pipeline de pré-processamento + modelo
+    numeric_cols = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
+    categorical_cols = X.select_dtypes(include=["object", "category", "bool"]).columns.tolist()
 
-    # 8. Treinamento
-    clf.fit(X_train, y_train)
+    numeric_transformer = Pipeline(
+        steps=[("imputer", SimpleImputer(strategy="median")), ("scaler", StandardScaler())]
+    )
 
-    # 9. Avaliacao simples
-    from src.evaluate import evaluate_model
-    metrics = evaluate_model(clf, X_test, y_test)
+    categorical_transformer = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            ("onehot", OneHotEncoder(handle_unknown="ignore")),
+        ]
+    )
 
-    # 10. Salvar pipeline
-    model_dir = os.path.dirname(model_output_path)
-    if model_dir:
-        os.makedirs(model_dir, exist_ok=True)
-    joblib.dump(clf, model_output_path)
-    print(f"Pipeline salvo em {model_output_path}")
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("num", numeric_transformer, numeric_cols),
+            ("cat", categorical_transformer, categorical_cols),
+        ],
+        remainder="drop",
+    )
 
-    # 11. Salvar metricas
-    metrics_dir = os.path.dirname(metrics_output_path)
-    if metrics_dir:
-        os.makedirs(metrics_dir, exist_ok=True)
-    with open(metrics_output_path, 'w', encoding='utf-8') as f:
-        json.dump(metrics, f, ensure_ascii=False, indent=2)
+    pipeline = Pipeline(
+        steps=[
+            ("preprocessor", preprocessor),
+            ("classifier", RandomForestClassifier(random_state=42)),
+        ]
+    )
 
-    # 12. Salvar estatisticas de treino para monitoramento de drift
-    stats = X_train.select_dtypes(include=['int64', 'float64']).mean().to_dict()
-    stats_base_dir = model_dir if model_dir else "."
-    stats_path = os.path.join(stats_base_dir, "train_stats.json")
-    with open(stats_path, 'w', encoding='utf-8') as f:
-        json.dump(stats, f, ensure_ascii=False, indent=2)
-    print(f"Estatisticas de treino salvas em {stats_path}")
+    # 4) Treinar
+    print("\n🎯 Treinando modelo...")
+    pipeline.fit(X_train, y_train)
+
+    # 5) Avaliar
+    print("\n📊 Avaliando modelo...")
+    metrics = evaluate_model(pipeline, X_test, y_test)
+    for k, v in metrics.items():
+        print(f"   {k}: {v:.4f}")
+
+    # 6) Salvar artefatos
+    model_path = PROJECT_ROOT / model_output_path
+    metrics_path = PROJECT_ROOT / metrics_output_path
+    train_stats_path = PROJECT_ROOT / train_stats_output_path
+
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+    metrics_path.parent.mkdir(parents=True, exist_ok=True)
+    train_stats_path.parent.mkdir(parents=True, exist_ok=True)
+
+    joblib.dump(pipeline, model_path)
+    with open(metrics_path, "w") as f:
+        json.dump(metrics, f, indent=2)
+
+    # Estatísticas de treino para monitoramento de drift
+    train_stats = {}
+    X_train_df = pd.DataFrame(X_train, columns=X.columns)
+    for col in X_train_df.select_dtypes(include=["int64", "float64"]).columns:
+        train_stats[col] = float(X_train_df[col].mean())
+
+    with open(train_stats_path, "w") as f:
+        json.dump(train_stats, f, indent=2)
+
+    print(f"\n💾 Modelo salvo em: {model_path}")
+    print(f"💾 Métricas salvas em: {metrics_path}")
+    print(f"💾 Estatisticas de treino salvas em: {train_stats_path}")
 
     return metrics
 
 
 if __name__ == "__main__":
-    data_path = 'data/raw/DATASET_FIAP.csv'
-    model_path = "models/model.pkl"
-    metrics_path = "models/metrics.json"
-    train_model(data_path, model_path, metrics_path)
+    # Suporta chamadas como:
+    # python src/train.py
+    # python src/train.py data/raw/DATASET_FIAP.csv models/model.pkl
+    args = sys.argv[1:]
+
+    data_arg = args[0] if len(args) >= 1 else None
+    model_arg = args[1] if len(args) >= 2 else "models/model.pkl"
+
+    train_model(data_path=data_arg, model_output_path=model_arg)

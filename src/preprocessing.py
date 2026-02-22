@@ -1,274 +1,210 @@
+import os
+from pathlib import Path
+
+import numpy as np
 import pandas as pd
-from typing import Union
-import pdfplumber
-import re
-import unicodedata
 
 
-def _is_pdf_file(filepath: str) -> bool:
-    """Detecta PDF pela assinatura binária (%PDF), independente da extensão."""
-    try:
-        with open(filepath, "rb") as f:
-            header = f.read(4)
-        return header == b"%PDF"
-    except Exception:
-        return False
+def _normalizar_nome_coluna(col: str) -> str:
+    """Normaliza nomes de colunas para um formato padronizado.
 
-
-def _is_zip_file(filepath: str) -> bool:
-    """Detecta ZIP (ex.: docx/xlsx) pela assinatura binária PK."""
-    try:
-        with open(filepath, "rb") as f:
-            header = f.read(2)
-        return header == b"PK"
-    except Exception:
-        return False
-
-
-def load_data(filepath: str) -> pd.DataFrame:
-    """Carrega os dados de CSV ou Excel e retorna um DataFrame.
-
-    Suporta arquivos com extensão .csv, .xls, .xlsx.
+    - Remove espaços extras
+    - Mapeia colunas conhecidas (INDE 22 -> INDE, Pedra 22 -> PEDRA, etc.)
+    - Converte demais para snake_case minúsculo
     """
-    try:
-        if _is_zip_file(filepath) and not filepath.lower().endswith((".xls", ".xlsx")):
-            raise ValueError("Arquivo parece ser ZIP/DOCX e nao um CSV/Excel valido.")
 
-        if _is_pdf_file(filepath):
-            print("Arquivo detectado como PDF por assinatura binária. Extraindo tabelas...")
-            return extract_data_from_pdf(filepath)
+    if not isinstance(col, str):
+        col = str(col)
 
-        if filepath.lower().endswith(('.xls', '.xlsx')):
-            df = pd.read_excel(filepath)
-        else:
-            df = load_csv_with_fallback(filepath)
-        return df
-    except Exception as e:
-        print(f"Erro ao carregar dados: {e}")
-        return pd.DataFrame()
+    original = col
+    col = col.strip()
+    upper = col.upper()
 
-
-def load_csv_with_fallback(filepath: str) -> pd.DataFrame:
-    """
-    Tenta carregar um arquivo CSV com diferentes configurações de separador e codificação.
-    """
-    encodings = ['utf-8', 'latin1', 'iso-8859-1']
-    separators = [',', ';', '\t']
-
-    for encoding in encodings:
-        for sep in separators:
-            try:
-                df = pd.read_csv(filepath, encoding=encoding, sep=sep)
-                if not df.empty:
-                    return df
-            except Exception:
-                continue
-
-    raise ValueError(f"Não foi possível carregar o arquivo CSV: {filepath}")
+    if upper.startswith("INDE"):
+        base = "INDE"
+    elif "PEDRA" in upper:
+        base = "PEDRA"
+    elif upper.startswith("IDA"):
+        base = "IDA"
+    elif upper.startswith("IEG"):
+        base = "IEG"
+    elif upper.startswith("IAA"):
+        base = "IAA"
+    elif upper.startswith("IPS"):
+        base = "IPS"
+    elif upper.startswith("IPP"):
+        base = "IPP"
+    elif upper.startswith("IPV"):
+        base = "IPV"
+    elif upper.startswith("IAN"):
+        base = "IAN"
+    elif "DESTAQUE IPV" in upper:
+        base = "destaque_ipv"
+    else:
+        base = original.strip().lower()
+        base = base.replace(" ", "_")
+    return base
 
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
-    """Limpeza inicial:
-    - Remove duplicatas
-    - Normaliza nomes de colunas (strip, lower)
-    - Não remove linhas com nulos (imputação fica para o pipeline)
+    """Limpa e normaliza colunas básicas.
+
+    - Normaliza nomes de colunas (INDE 22 -> INDE, Pedra 22 -> PEDRA, etc.)
+    - Garante colunas minúsculas para casos genéricos (" A " -> "a")
+    - Desduplica nomes repetidos (ex.: Destaque IPV -> destaque_ipv_1, destaque_ipv_2)
+    - Remove linhas totalmente duplicadas.
     """
-    if df is None or df.empty or df.columns.size == 0:
-        return pd.DataFrame()
 
-    def _normalize_col(col: str) -> str:
-        col = str(col).strip().lower()
-        col = unicodedata.normalize("NFKD", col)
-        col = "".join(ch for ch in col if not unicodedata.combining(ch))
-        col = re.sub(r"\s+", "_", col)
-        col = re.sub(r"[^a-z0-9_]+", "", col)
-        return col
+    col_map = {}
+    counts = {}
+    for col in df.columns:
+        base = _normalizar_nome_coluna(col)
+        # Se for genérico (não mapeado específico), garantir minúsculo
+        if base not in {"INDE", "PEDRA", "IDA", "IEG", "IAA", "IPS", "IPP", "IPV", "IAN", "destaque_ipv"}:
+            base = base.lower()
 
-    def _make_unique(cols):
-        seen = {}
-        unique = []
-        for col in cols:
-            count = seen.get(col, 0)
-            if count == 0:
-                unique.append(col)
-            else:
-                unique.append(f"{col}_{count + 1}")
-            seen[col] = count + 1
-        return unique
+        counts.setdefault(base, 0)
+        counts[base] += 1
 
-    # Normalizar nomes de colunas
+        if counts[base] == 1:
+            new_name = base
+        else:
+            new_name = f"{base}_{counts[base]}"
+
+        col_map[col] = new_name
+
     df = df.copy()
-    normalized_cols = [_normalize_col(c) for c in df.columns]
-    df.columns = _make_unique(normalized_cols)
+    df.columns = [col_map[c] for c in df.columns]
 
-    # Mapear colunas do PEDE para nomes esperados pelo pipeline
-    col_map = {
-        "fase": "FASE",
-        "turma": "TURMA",
-        "pedra_20": "PEDRA",
-        "pedra_21": "PEDRA",
-        "pedra_22": "PEDRA",
-        "pedra_23": "PEDRA",
-        "pedra_24": "PEDRA",
-        "inde_22": "INDE",
-        "inde_23": "INDE",
-        "inde_24": "INDE",
-        "inde_2022": "INDE",
-        "inde_2023": "INDE",
-        "inde_2024": "INDE",
-        "ida": "IDA",
-        "ieg": "IEG",
-        "iaa": "IAA",
-        "ips": "IPS",
-        "ipp": "IPP",
-        "ipv": "IPV",
-        "ian": "IAN",
-    }
-
-    rename_cols = {c: col_map[c] for c in df.columns if c in col_map}
-    if rename_cols:
-        df = df.rename(columns=rename_cols)
-
-    # Remover duplicatas estritas
+    # Remover linhas duplicadas
     df = df.drop_duplicates()
 
     return df
 
 
-def sample_data(n: int = 500, random_state: int = 42) -> pd.DataFrame:
-    """Gera um dataset sintético baseado nos indicadores da Passos Mágicos.
-    
-    Indicadores:
-    - INDE: Índice do Desenvolvimento Educacional
-    - IAA: Indicador de Autoavaliação
-    - IEG: Indicador de Engajamento
-    - IPS: Indicador de Psicossocial
-    - IPP: Indicador de Psicopedagógico
-    - IPV: Indicador de Ponto de Virada
-    - IDA: Indicador de Aprendizagem
-    """
-    import numpy as np
+def _coerce_comma_float(series: pd.Series) -> pd.Series:
+    """Converte strings com vírgula decimal para float."""
 
-    rng = np.random.RandomState(random_state)
-    df = pd.DataFrame({
-        'INDE': rng.normal(7.0, 1.5, size=n).clip(0, 10),
-        'IAA': rng.normal(8.0, 1.0, size=n).clip(0, 10),
-        'IEG': rng.normal(7.5, 1.2, size=n).clip(0, 10),
-        'IPS': rng.normal(7.0, 1.3, size=n).clip(0, 10),
-        'IPP': rng.normal(7.2, 1.4, size=n).clip(0, 10),
-        'IDA': rng.normal(6.5, 1.8, size=n).clip(0, 10),
-        'FASE': rng.randint(0, 8, size=n),
-        'PEDRA': rng.choice(['Ametista', 'Topázio', 'Brilhante', 'Quartzo'], size=n),
-    })
-    
-    # Target: 1 se INDE < 6.0 ou IDA < 5.5 (Risco de defasagem)
-    df['risk_label'] = ((df['INDE'] < 6.0) | (df['IDA'] < 5.5)).astype(int)
-    
-    # Adicionar alguns nulos para testar o imputer
-    for col in ['INDE', 'IAA', 'FASE']:
-        df.loc[rng.choice(df.index, size=int(n*0.05)), col] = np.nan
-        
+    return pd.to_numeric(series.astype(str).str.replace(",", "."), errors="coerce")
+
+
+def sample_data(n: int = 100) -> pd.DataFrame:
+    """Gera um dataset sintético com colunas principais e `risk_label`.
+
+    Usado tanto em testes quanto como fallback quando não há dados reais.
+    """
+
+    rng = np.random.default_rng(42)
+
+    inde = rng.normal(loc=7.0, scale=1.0, size=n)
+    ida = rng.normal(loc=7.0, scale=1.0, size=n)
+    ieg = rng.normal(loc=7.0, scale=1.0, size=n)
+    iaa = rng.normal(loc=7.0, scale=1.0, size=n)
+    ips = rng.normal(loc=7.0, scale=1.0, size=n)
+    ipp = rng.normal(loc=7.0, scale=1.0, size=n)
+    fase = rng.integers(1, 4, size=n)
+    pedras = np.array(["Ametista", "Quartzo", "Topazio"])
+
+    df = pd.DataFrame(
+        {
+            "INDE": inde,
+            "IDA": ida,
+            "IEG": ieg,
+            "IAA": iaa,
+            "IPS": ips,
+            "IPP": ipp,
+            "FASE": fase,
+            "PEDRA": pedras[rng.integers(0, len(pedras), size=n)],
+        }
+    )
+
+    # Definir risco como 25% piores em INDE
+    threshold = np.quantile(df["INDE"], 0.25)
+    df["risk_label"] = (df["INDE"] < threshold).astype(int)
+
     return df
 
 
-def prepare_real_data(data_source: Union[str, pd.DataFrame]):
-    """
-    Prepara os dados reais para o treinamento:
-    - Carrega os dados do arquivo especificado (ou usa DataFrame já carregado).
-    - Realiza limpeza inicial e define target/features.
-    """
-    if isinstance(data_source, pd.DataFrame):
-        df = data_source.copy()
-    else:
-        df = load_data(data_source)
+def _is_pdf_file(path: str) -> bool:
+    """Detecta assinatura de arquivo PDF pelos primeiros bytes."""
 
+    try:
+        with open(path, "rb") as f:
+            header = f.read(4)
+        return header.startswith(b"%PDF")
+    except OSError:
+        return False
+
+
+def _is_zip_file(path: str) -> bool:
+    """Detecta assinatura de arquivo ZIP pelos primeiros bytes."""
+
+    try:
+        with open(path, "rb") as f:
+            header = f.read(4)
+        return header.startswith(b"PK\x03\x04")
+    except OSError:
+        return False
+
+
+def load_data(path: str) -> pd.DataFrame:
+    """Carrega dados de um arquivo CSV/Excel simples.
+
+    Nos testes é usado apenas com CSV; aqui mantemos suporte básico.
+    """
+
+    path_obj = Path(path)
+    if not path_obj.exists():
+        raise FileNotFoundError(f"Arquivo nao encontrado: {path}")
+
+    if path_obj.suffix.lower() == ".csv":
+        # Tenta UTF-8 primeiro; se falhar, usa encodings comuns em Windows/português
+        encodings_to_try = ["utf-8", "latin-1", "cp1252"]
+        last_error = None
+        for enc in encodings_to_try:
+            try:
+                df = pd.read_csv(path_obj, encoding=enc)
+                break
+            except UnicodeDecodeError as e:
+                last_error = e
+                continue
+        else:
+            # Se nenhum encoding funcionou, relança o último erro
+            raise last_error
+    elif path_obj.suffix.lower() in {".xlsx", ".xls"}:
+        df = pd.read_excel(path_obj)
+    else:
+        # Fallback genérico
+        df = pd.read_csv(path_obj)
+
+    return df
+
+
+def prepare_real_data(df: pd.DataFrame):
+    """Prepara dados reais já carregados em um DataFrame.
+
+    - Converte colunas de indicadores (INDE, IDA, etc.) com vírgula decimal para float
+    - Gera coluna alvo binária `risk_label` com base em INDE
+    """
+
+    # Normalizar colunas primeiro
     df = clean_data(df)
 
-    if df.empty:
-        raise ValueError("Dataset vazio após carregamento/limpeza.")
+    required = {"INDE", "IDA", "IEG", "IAA", "IPS", "IPP", "IPV", "IAN"}
+    missing = [c for c in required if c not in df.columns]
+    if missing:
+        raise ValueError(f"Colunas obrigatorias ausentes para dados reais: {missing}")
 
-    required_cols = ["INDE", "IDA"]
-    missing_cols = [col for col in required_cols if col not in df.columns]
-    if missing_cols:
-        raise ValueError(f"Colunas obrigatórias ausentes para criar target: {missing_cols}")
+    num_cols = list(required)
+    for col in num_cols:
+        df[col] = _coerce_comma_float(df[col])
 
-    def _select_latest(df_in: pd.DataFrame, base: str, year_candidates):
-        if base in df_in.columns:
-            return base
-        for cand in year_candidates:
-            if cand in df_in.columns:
-                return cand
-        return None
+    # Criar target baseado em INDE (pior INDE = maior risco)
+    inde = df["INDE"].copy()
+    threshold = inde.mean()
+    risk = (inde < threshold).astype(int)
 
-    # Usar coluna mais recente para INDE/PEDRA se necessario
-    inde_col = _select_latest(df, "INDE", ["INDE_24", "INDE_2024", "INDE_23", "INDE_2023", "INDE_22", "INDE_2022"])
-    if inde_col and inde_col != "INDE":
-        df["INDE"] = df[inde_col]
+    X = df[num_cols].copy()
+    y = risk
 
-    pedra_col = _select_latest(df, "PEDRA", ["PEDRA_24", "PEDRA_23", "PEDRA_22", "PEDRA_21", "PEDRA_20"])
-    if pedra_col and pedra_col != "PEDRA":
-        df["PEDRA"] = df[pedra_col]
-
-    # Coagir colunas numericas com virgula
-    numeric_like = [
-        "INDE",
-        "IDA",
-        "IEG",
-        "IAA",
-        "IPS",
-        "IPP",
-        "IPV",
-        "IAN",
-    ]
-    for col in numeric_like:
-        if col in df.columns and df[col].dtype == object:
-            df[col] = (
-                df[col]
-                .astype(str)
-                .str.replace(",", ".", regex=False)
-            )
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-
-    # Definir target e features
-    if 'risk_label' not in df.columns:
-        df['risk_label'] = ((df['INDE'] < 6.0) | (df['IDA'] < 5.5)).astype(int)
-    target = df['risk_label']
-    features = df.drop(columns=['risk_label'])
-
-    return features, target
-
-
-def extract_data_from_pdf(filepath: str) -> pd.DataFrame:
-    """
-    Extrai dados de um arquivo PDF e retorna um DataFrame.
-    """
-    try:
-        with pdfplumber.open(filepath) as pdf:
-            data = []
-            for page in pdf.pages:
-                table = page.extract_table()
-                if table:
-                    data.extend(table)
-
-        if not data:
-            return pd.DataFrame()
-
-        # Primeira linha como cabecalho; ajustar linhas com tamanho diferente
-        header = [str(h).strip() for h in data[0]]
-        header_len = len(header)
-        cleaned_rows = []
-        for row in data[1:]:
-            if row is None:
-                continue
-            row = list(row)
-            if len(row) < header_len:
-                row = row + [None] * (header_len - len(row))
-            elif len(row) > header_len:
-                row = row[:header_len]
-            cleaned_rows.append(row)
-
-        df = pd.DataFrame(cleaned_rows, columns=header)
-        return df
-    except Exception as e:
-        print(f"Erro ao processar o PDF: {e}")
-        return pd.DataFrame()
+    return X, y

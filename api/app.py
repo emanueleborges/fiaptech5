@@ -16,13 +16,20 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+import sys
+from pathlib import Path
+
+# Garante que o diretório raiz do projeto esteja no PYTHONPATH
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 # Configuracao de Logs Avancada
 LOG_DIR = "logs"
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 
-log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+log_formatter = logging.Formatter("%(message)s")
 log_handler = RotatingFileHandler(os.path.join(LOG_DIR, "api_monitor.log"), maxBytes=10**6, backupCount=5)
 log_handler.setFormatter(log_formatter)
 
@@ -86,19 +93,45 @@ def load_resources():
     if os.path.exists(MODEL_PATH):
         try:
             model = joblib.load(MODEL_PATH)
-            logger.info(f"Modelo carregado com sucesso de {MODEL_PATH}")
+            logger.info(json.dumps({
+                "event": "model_loaded",
+                "path": MODEL_PATH,
+                "status": "success",
+                "timestamp": datetime.now().isoformat()
+            }))
         except Exception as e:
-            logger.error(f"Erro ao carregar o modelo: {e}")
+            logger.error(json.dumps({
+                "event": "model_load_error",
+                "path": MODEL_PATH,
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }))
             model = _build_fallback_model()
-            logger.info("Modelo fallback carregado em memoria")
+            logger.info(json.dumps({
+                "event": "model_fallback_built",
+                "status": "success",
+                "timestamp": datetime.now().isoformat()
+            }))
             
     if os.path.exists(TRAIN_STATS_PATH):
         try:
             with open(TRAIN_STATS_PATH, "r") as f:
                 train_stats = json.load(f)
-            logger.info("Estatisticas de treino carregadas.")
+            logger.info(json.dumps({
+                "event": "train_stats_loaded",
+                "path": TRAIN_STATS_PATH,
+                "status": "success",
+                "timestamp": datetime.now().isoformat()
+            }))
         except Exception as e:
-            logger.error(f"Erro ao carregar estatisticas: {e}")
+            logger.error(json.dumps({
+                "event": "train_stats_load_error",
+                "path": TRAIN_STATS_PATH,
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }))
 
 
 @asynccontextmanager
@@ -201,7 +234,11 @@ def drift_dashboard():
 @app.post("/predict")
 def predict(data: StudentData):
     if not model:
-        logger.error("Tentativa de predicao sem modelo carregado")
+        logger.error(json.dumps({
+            "event": "prediction_error",
+            "reason": "model_not_loaded",
+            "timestamp": datetime.now().isoformat()
+        }))
         raise HTTPException(status_code=500, detail="Modelo nao carregado")
     
     try:
@@ -211,7 +248,15 @@ def predict(data: StudentData):
         # Monitoramento de Drift
         drifts = check_drift(input_data)
         if drifts:
-            logger.warning(f"DRIFT ALERT: {drifts}")
+            # Prefixo "DRIFT ALERT:" usado pelo dashboard para identificar linhas relevantes
+            logger.warning(
+                "DRIFT ALERT: " + json.dumps({
+                    "event": "drift_alert",
+                    "input_sample": dict_data,
+                    "drifts": drifts,
+                    "timestamp": datetime.now().isoformat(),
+                })
+            )
         
         # Aplicar engenharia de features
         from src.feature_engineering import create_features, select_features
@@ -221,14 +266,28 @@ def predict(data: StudentData):
         # Realizar predicao
         prediction = model.predict(input_data)
         result = int(prediction[0])
+
+        # Traduz a saída numérica para um rótulo mais amigável
+        label = "em_grupo_de_risco" if result == 1 else "fora_do_grupo_de_risco"
         
-        # Log da predicao
-        logger.info(f"Input: {dict_data} | Prediction: {result}")
+        # Log estruturado da predicao
+        logger.info(json.dumps({
+            "event": "prediction",
+            "input": dict_data,
+            "prediction": result,
+            "label": label,
+            "drift_detected": bool(drifts),
+            "timestamp": datetime.now().isoformat()
+        }))
         
-        return {"prediction": result, "drift_alerts": drifts}
+        return {"prediction": result, "label": label, "drift_alerts": drifts}
     except Exception as e:
-        logger.error(f"Erro na predicao: {e}")
+        logger.error(json.dumps({
+            "event": "prediction_exception",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }))
         raise HTTPException(status_code=400, detail=str(e))
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)

@@ -1,38 +1,42 @@
 import pandas as pd
-from typing import List
 
 
 def create_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Cria features baseadas nos indicadores educacionais.
+    """Cria features derivadas usadas no pipeline.
+
+    - `avg_performance`: média de INDE/IDA/IPP/IEG quando disponíveis
+    - `low_engagement`: 1 se avg_performance estiver abaixo da mediana
     """
+
     df = df.copy()
 
-    # Média de indicadores de desempenho
-    perf_cols = ['INDE', 'IDA', 'IPP']
-    if all(col in df.columns for col in perf_cols):
-        df['avg_performance'] = df[perf_cols].mean(axis=1)
-
-    # Flag de baixo engajamento
-    if 'IEG' in df.columns:
-        df['low_engagement'] = (df['IEG'] < 5.0).astype(int)
+    base_cols = [c for c in ["INDE", "IDA", "IPP", "IEG"] if c in df.columns]
+    if base_cols:
+        df["avg_performance"] = df[base_cols].mean(axis=1)
+        median_val = df["avg_performance"].median()
+        df["low_engagement"] = (df["avg_performance"] < median_val).astype(int)
 
     return df
 
 
-def select_features(df: pd.DataFrame, target: str = 'risk_label') -> pd.DataFrame:
-    """Retorna DataFrame apenas com features e a coluna target (se existir).
+def select_features(df: pd.DataFrame, target: str = "risk_label") -> pd.DataFrame:
+    """Remove colunas claramente de identificação, mantendo o alvo.
 
-    A seleção aqui é simples: todas as colunas numéricas + categóricas
-    (serão tratadas no pipeline) exceto identificadores óbvios.
+    - Remove colunas que parecem IDs ou identificadores sensíveis
+    - Preserva a coluna `target` quando presente
     """
-    df = df.copy()
-    # Excluir colunas que claramente não são features
-    drop_like = [c for c in df.columns if c.lower() in ('id', 'identificador')]
-    df = df.drop(columns=drop_like, errors='ignore')
 
-    # Garantir que target, se existir, venha por último
-    if target in df.columns:
-        cols = [c for c in df.columns if c != target] + [target]
-        df = df[cols]
+    df = df.copy()
+    cols_to_drop = []
+
+    for col in df.columns:
+        if col == target:
+            continue
+        lower = col.lower()
+        if any(x in lower for x in ["id", "nome", "cpf", "rg", "email", "fonte"]):
+            cols_to_drop.append(col)
+
+    if cols_to_drop:
+        df = df.drop(columns=cols_to_drop)
 
     return df
