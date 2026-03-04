@@ -115,8 +115,7 @@ flowchart LR
     python src/train.py data/raw/DATASET_FIAP.csv models/model.pkl
     ```
 
-3.  **Iniciar a API:**
-    ```bash
+3.  **Iniciar a API:**    ```bash
     uvicorn api.app:app --reload
     ```
 
@@ -162,6 +161,42 @@ curl -X 'POST' \
     "drift_alerts": {}
 }
 ```
+
+> Mais exemplos de payloads com `curl`:
+>
+> 1. **Dados que disparam avisos de drift** (valores muito baixos em relação às médias de treino):
+> ```bash
+> curl -X POST \
+>   http://localhost:8000/predict \
+>   -H 'Content-Type: application/json' \
+>   -d '{
+>     "INDE": 1.0,
+>     "IDA": 1.0,
+>     "IEG": 1.0,
+>     "IAA": 1.0,
+>     "IPS": 1.0,
+>     "IPP": 1.0,
+>     "FASE": 0,
+>     "PEDRA": "Quartzo"
+> }'
+> ```
+> A resposta conterá um campo `drift_alerts` não vazio indicando as features com média desviada.
+>
+> 2. **Exemplo mínimo válido** (não é necessário enviar colunas extras):
+> ```bash
+> curl -X POST http://localhost:8000/predict \
+>   -H 'Content-Type: application/json' \
+>   -d '{"INDE":7,"IDA":8,"IEG":6,"IAA":7,"IPS":6,"IPP":5.5,"FASE":1,"PEDRA":"Ágata"}'
+> ```
+>
+> 3. **Payload inválido para demonstrar tratamento de erro** (campo faltando ou tipo errado):
+> ```bash
+> curl -X POST http://localhost:8000/predict \
+>   -H 'Content-Type: application/json' \
+>   -d '{"INDE": "texto", "IDD": 5}'
+> ```
+> A API retornará `status_code 422` ou `400` com mensagem de validação do Pydantic.
+
 
 **Outros endpoints úteis**
 
