@@ -161,14 +161,18 @@ def process_all_files():
     base_dir = Path('data/raw')
     all_data = []
     
-    # Processar PDFs com pdfplumber
-    pdfs = [
-        ('DATASET_FIAP.pdf', 'principal'),
-        ('PEDE_PASSOS_2022.pdf', '2022'),
-        ('PEDE_PASSOS_2023.pdf', '2023')
-    ]
+    # Processar arquivos que são PDFs (mesmo com extensão .csv)
+    pdf_files = []
+    for file_path in base_dir.glob('*.csv'):
+        try:
+            with open(file_path, 'rb') as f:
+                header = f.read(8)
+                if header.startswith(b'%PDF'):
+                    pdf_files.append((file_path.name, file_path.name.replace('.csv', '')))
+        except:
+            pass
     
-    for pdf_name, ano in pdfs:
+    for pdf_name, ano in pdf_files:
         pdf_path = base_dir / pdf_name
         if pdf_path.exists():
             df = extract_from_pdf_with_plumber(pdf_path, ano)

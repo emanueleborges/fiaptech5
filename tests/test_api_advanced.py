@@ -34,6 +34,8 @@ def test_predict_drift_detection():
         'IAA': 1.0,
         'IPS': 1.0,
         'IPP': 1.0,
+        'IPV': 0.5,
+        'IAN': 5.0,
         'FASE': 0,
         'PEDRA': 'Quartzo'
     }
@@ -53,6 +55,8 @@ def test_predict_normal_data():
         'IAA': 8.5,
         'IPS': 7.0,
         'IPP': 7.5,
+        'IPV': 0.8,
+        'IAN': 7.5,
         'FASE': 2,
         'PEDRA': 'Ametista'
     }

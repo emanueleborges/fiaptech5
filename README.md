@@ -135,12 +135,22 @@ Para facilitar a execução e testes, a aplicação conta com uma interface nati
 ### Via terminal (cURL)
 **Endpoint:** `POST /predict`
 
-**Exemplo com cURL:**
+**Campos Obrigatórios:**
+- `INDE`: Indicador de Desenvolvimento (0-10)
+- `IDA`: Indicador de Defasagem em Alfabetização (0-10)
+- `IEG`: Indicador de Engajamento (0-10)
+- `IAA`: Indicador de Assiduidade e Atendimento (0-10)
+- `IPS`: Indicador de Participação Social (0-10)
+- `IPP`: Indicador de Postura Pedagógica (0-10)
+- `IPV`: Indicador de Ponto de Virada (0-1)
+- `IAN`: Indicador de Aprendizado em Novas Áreas (0-10)
+- `FASE`: Fase do aluno (inteiro)
+- `PEDRA`: Pedra associada (string: "Quartzo", "Ametista", etc.)
+
+**Exemplo 1: Aluno fora do grupo de risco** (scores altos)
 ```bash
-curl -X 'POST' \
-  'http://localhost:8000/predict' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
+curl -X POST "http://127.0.0.1:8000/predict" \
+  -H "Content-Type: application/json" \
   -d '{
     "INDE": 7.5,
     "IDA": 8.0,
@@ -148,12 +158,14 @@ curl -X 'POST' \
     "IAA": 8.5,
     "IPS": 7.0,
     "IPP": 7.5,
+    "IPV": 0.8,
+    "IAN": 7.5,
     "FASE": 2,
     "PEDRA": "Ametista"
-}'
+  }'
 ```
 
-**Exemplo de Resposta:**
+**Resposta Esperada:**
 ```json
 {
     "prediction": 0,
@@ -162,40 +174,91 @@ curl -X 'POST' \
 }
 ```
 
-> Mais exemplos de payloads com `curl`:
->
-> 1. **Dados que disparam avisos de drift** (valores muito baixos em relação às médias de treino):
-> ```bash
-> curl -X POST \
->   http://localhost:8000/predict \
->   -H 'Content-Type: application/json' \
->   -d '{
->     "INDE": 1.0,
->     "IDA": 1.0,
->     "IEG": 1.0,
->     "IAA": 1.0,
->     "IPS": 1.0,
->     "IPP": 1.0,
->     "FASE": 0,
->     "PEDRA": "Quartzo"
-> }'
-> ```
-> A resposta conterá um campo `drift_alerts` não vazio indicando as features com média desviada.
->
-> 2. **Exemplo mínimo válido** (não é necessário enviar colunas extras):
-> ```bash
-> curl -X POST http://localhost:8000/predict \
->   -H 'Content-Type: application/json' \
->   -d '{"INDE":7,"IDA":8,"IEG":6,"IAA":7,"IPS":6,"IPP":5.5,"FASE":1,"PEDRA":"Ágata"}'
-> ```
->
-> 3. **Payload inválido para demonstrar tratamento de erro** (campo faltando ou tipo errado):
-> ```bash
-> curl -X POST http://localhost:8000/predict \
->   -H 'Content-Type: application/json' \
->   -d '{"INDE": "texto", "IDD": 5}'
-> ```
-> A API retornará `status_code 422` ou `400` com mensagem de validação do Pydantic.
+**Exemplo 2: Aluno em grupo de risco** (scores baixos)
+```bash
+curl -X POST "http://127.0.0.1:8000/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "INDE": 3.0,
+    "IDA": 2.5,
+    "IEG": 3.5,
+    "IAA": 2.0,
+    "IPS": 3.0,
+    "IPP": 2.8,
+    "IPV": 0.2,
+    "IAN": 2.5,
+    "FASE": 0,
+    "PEDRA": "Quartzo"
+  }'
+```
+
+**Resposta Esperada:**
+```json
+{
+    "prediction": 1,
+    "label": "em_grupo_de_risco",
+    "drift_alerts": {}
+}
+```
+
+**Exemplo 3: Dados que disparam avisos de drift** (valores extremos em relação às médias de treino)
+```bash
+curl -X POST "http://127.0.0.1:8000/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "INDE": 1.0,
+    "IDA": 1.0,
+    "IEG": 1.0,
+    "IAA": 1.0,
+    "IPS": 1.0,
+    "IPP": 1.0,
+    "IPV": 0.1,
+    "IAN": 1.0,
+    "FASE": 0,
+    "PEDRA": "Quartzo"
+  }'
+```
+
+**Resposta com alertas de drift:**
+```json
+{
+    "prediction": 1,
+    "label": "em_grupo_de_risco",
+    "drift_alerts": {
+        "INDE": {
+            "train_mean": 5.42,
+            "current_mean": 1.0,
+            "status": "DRIFT DETECTED"
+        },
+        "IEG": {
+            "train_mean": 6.06,
+            "current_mean": 1.0,
+            "status": "DRIFT DETECTED"
+        }
+    }
+}
+```
+
+**Exemplo 4: Formato minimizado** (sem quebras de linha)
+```bash
+curl -X POST "http://127.0.0.1:8000/predict" \
+  -H "Content-Type: application/json" \
+  -d '{"INDE":6,"IDA":6.5,"IEG":6.2,"IAA":6.8,"IPS":6.1,"IPP":6.3,"IPV":0.6,"IAN":6.4,"FASE":1,"PEDRA":"Ágata"}'
+```
+
+**Exemplo 5: Teste de validação** (payload inválido - campo faltando)
+```bash
+curl -X POST "http://127.0.0.1:8000/predict" \
+  -H "Content-Type: application/json" \
+  -d '{"INDE": 7.5, "IDA": 8.0}'
+```
+
+**Resposta de Erro:**
+```json
+{
+    "detail": "columns are missing: {'IEG', 'IAA', 'IPS', 'IPP', 'IPV', 'IAN'}"
+}
+```
 
 
 **Outros endpoints úteis**
@@ -239,12 +302,23 @@ curl -X GET "http://127.0.0.1:8000/health"
 curl -X GET "http://127.0.0.1:8000/metrics"
 ```
 
-**Predicao**
+**Predicao - Exemplo com todos os campos obrigatórios incluindo IPV e IAN**
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/predict" \
     -H "Content-Type: application/json" \
-    -d "{"INDE":7.5,"IDA":8.0,"IEG":7.0,"IAA":8.5,"IPS":7.0,"IPP":7.5,"FASE":2,"PEDRA":"Ametista"}"
+    -d '{
+      "INDE": 7.5,
+      "IDA": 8.0,
+      "IEG": 7.0,
+      "IAA": 8.5,
+      "IPS": 7.0,
+      "IPP": 7.5,
+      "IPV": 0.8,
+      "IAN": 7.5,
+      "FASE": 2,
+      "PEDRA": "Ametista"
+    }'
 ```
 
 **Monitoramento de drift**

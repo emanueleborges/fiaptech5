@@ -156,8 +156,27 @@ class StudentData(BaseModel):
     IPP: float = 0.0
     FASE: int = 0
     PEDRA: str = "Quartzo"
+    IAN: float = 0.0
+    IPV: float = 0.0
 
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(
+        extra="allow",
+        json_schema_extra={
+            "example": {
+                "INDE": 0,
+                "IDA": 0,
+                "IEG": 0,
+                "IAA": 0,
+                "IPS": 0,
+                "IPP": 0,
+                "FASE": 0,
+                "IAN": 0,
+                "IPV": 0,
+                "PEDRA": "Quartzo",
+                "additionalProp1": {},
+            }
+        },
+    )
 
 def check_drift(input_df: pd.DataFrame):
     """Monitoramento basico de drift comparando as medias do input vs treino."""
