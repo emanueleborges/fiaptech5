@@ -25,7 +25,7 @@ python src/train.py
 ## 3. Suba a API
 
 ```bash
-uvicorn api.app:app --reload
+uvicorn app.main:app --reload
 ```
 Acesse: http://127.0.0.1:8000
 

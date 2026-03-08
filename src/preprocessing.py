@@ -102,8 +102,10 @@ def sample_data(n: int = 100) -> pd.DataFrame:
     iaa = rng.normal(loc=7.0, scale=1.0, size=n)
     ips = rng.normal(loc=7.0, scale=1.0, size=n)
     ipp = rng.normal(loc=7.0, scale=1.0, size=n)
+    ipv = rng.normal(loc=0.5, scale=0.2, size=n).clip(0, 1)
+    ian = rng.normal(loc=6.5, scale=1.2, size=n)
     fase = rng.integers(1, 4, size=n)
-    pedras = np.array(["Ametista", "Quartzo", "Topazio"])
+    pedras = np.array(["Ametista", "Quartzo", "Topazio", "Agata"])
 
     df = pd.DataFrame(
         {
@@ -113,14 +115,30 @@ def sample_data(n: int = 100) -> pd.DataFrame:
             "IAA": iaa,
             "IPS": ips,
             "IPP": ipp,
+            "IPV": ipv,
+            "IAN": ian,
             "FASE": fase,
             "PEDRA": pedras[rng.integers(0, len(pedras), size=n)],
         }
     )
 
-    # Definir risco como 25% piores em INDE
-    threshold = np.quantile(df["INDE"], 0.25)
-    df["risk_label"] = (df["INDE"] < threshold).astype(int)
+    # Definir risco combinando múltiplos indicadores para maior realismo
+    # Alunos com desempenho geral baixo têm maior risco
+    risk_score = (
+        0.35 * df["INDE"]
+        + 0.15 * df["IDA"]
+        + 0.10 * df["IEG"]
+        + 0.10 * df["IAA"]
+        + 0.10 * df["IPS"]
+        + 0.10 * df["IPP"]
+        + 0.05 * df["IAN"]
+        + 0.05 * (df["IPV"] * 10)  # normalizar IPV para escala 0-10
+    )
+    # Adicionar ruído leve para simular incerteza real
+    noise = rng.normal(0, 0.3, size=n)
+    risk_score = risk_score + noise
+    threshold = np.quantile(risk_score, 0.25)
+    df["risk_label"] = (risk_score < threshold).astype(int)
 
     return df
 

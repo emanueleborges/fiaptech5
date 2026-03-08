@@ -1,12 +1,35 @@
 {
   "info": {
     "name": "Passos Magicos - API",
-    "description": "Colecao de testes para a API Passos Magicos",
+    "description": "Colecao de testes para a API Passos Magicos - endpoints em ordem de execucao",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Health",
+      "name": "1. Train - Treinar Modelo",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"n_samples\": 1000\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/train",
+          "protocol": "http",
+          "host": ["127.0.0.1"],
+          "port": "8000",
+          "path": ["train"]
+        }
+      }
+    },
+    {
+      "name": "2. Health - Status da API",
       "request": {
         "method": "GET",
         "header": [],
@@ -20,7 +43,7 @@
       }
     },
     {
-      "name": "Metrics",
+      "name": "3. Metrics - Metricas do Modelo",
       "request": {
         "method": "GET",
         "header": [],
@@ -34,7 +57,104 @@
       }
     },
     {
-      "name": "Drift",
+      "name": "4. Predict - Aluno fora de risco",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"INDE\": 7.5,\n  \"IDA\": 8.0,\n  \"IEG\": 7.0,\n  \"IAA\": 8.5,\n  \"IPS\": 7.0,\n  \"IPP\": 7.5,\n  \"IPV\": 0.8,\n  \"IAN\": 7.5,\n  \"FASE\": 2,\n  \"PEDRA\": \"Ametista\"\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/predict",
+          "protocol": "http",
+          "host": ["127.0.0.1"],
+          "port": "8000",
+          "path": ["predict"]
+        }
+      }
+    },
+    {
+      "name": "5. Predict - Aluno em risco",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"INDE\": 3.0,\n  \"IDA\": 2.5,\n  \"IEG\": 3.5,\n  \"IAA\": 2.0,\n  \"IPS\": 3.0,\n  \"IPP\": 2.8,\n  \"IPV\": 0.2,\n  \"IAN\": 2.5,\n  \"FASE\": 0,\n  \"PEDRA\": \"Quartzo\"\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/predict",
+          "protocol": "http",
+          "host": ["127.0.0.1"],
+          "port": "8000",
+          "path": ["predict"]
+        }
+      }
+    },
+    {
+      "name": "6. Predict - Drift Detection",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"INDE\": 1.0,\n  \"IDA\": 1.0,\n  \"IEG\": 1.0,\n  \"IAA\": 1.0,\n  \"IPS\": 1.0,\n  \"IPP\": 1.0,\n  \"IPV\": 0.1,\n  \"IAN\": 1.0,\n  \"FASE\": 0,\n  \"PEDRA\": \"Quartzo\"\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/predict",
+          "protocol": "http",
+          "host": ["127.0.0.1"],
+          "port": "8000",
+          "path": ["predict"]
+        }
+      }
+    },
+    {
+      "name": "7. Monitoring - Metricas Operacionais",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:8000/monitoring",
+          "protocol": "http",
+          "host": ["127.0.0.1"],
+          "port": "8000",
+          "path": ["monitoring"]
+        }
+      }
+    },
+    {
+      "name": "8. Monitoring - Predicoes Recentes",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:8000/monitoring/predictions",
+          "protocol": "http",
+          "host": ["127.0.0.1"],
+          "port": "8000",
+          "path": ["monitoring", "predictions"]
+        }
+      }
+    },
+    {
+      "name": "9. Drift - Status",
       "request": {
         "method": "GET",
         "header": [],
@@ -48,7 +168,21 @@
       }
     },
     {
-      "name": "Drift Dashboard",
+      "name": "10. Drift - Historico",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:8000/drift/history",
+          "protocol": "http",
+          "host": ["127.0.0.1"],
+          "port": "8000",
+          "path": ["drift", "history"]
+        }
+      }
+    },
+    {
+      "name": "11. Drift - Dashboard HTML",
       "request": {
         "method": "GET",
         "header": [],
@@ -58,29 +192,6 @@
           "host": ["127.0.0.1"],
           "port": "8000",
           "path": ["drift", "dashboard"]
-        }
-      }
-    },
-    {
-      "name": "Predict",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"INDE\": 7.5,\n  \"IDA\": 8.0,\n  \"IEG\": 7.0,\n  \"IAA\": 8.5,\n  \"IPS\": 7.0,\n  \"IPP\": 7.5,\n  \"FASE\": 2,\n  \"PEDRA\": \"Ametista\"\n}"
-        },
-        "url": {
-          "raw": "http://127.0.0.1:8000/predict",
-          "protocol": "http",
-          "host": ["127.0.0.1"],
-          "port": "8000",
-          "path": ["predict"]
         }
       }
     }

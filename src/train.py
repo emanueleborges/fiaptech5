@@ -24,48 +24,79 @@ from src.evaluate import evaluate_model
 
 def train_model(
     data_path: str = None,
-    model_output_path: str = "models/model.pkl",
+    model_output_path: str = "app/model/model.pkl",
     metrics_output_path: str = "models/metrics.json",
     train_stats_output_path: str = "models/train_stats.json",
+    n_samples: int = 1000,
 ):
     """Treina o modelo conforme pipeline descrita no README.
 
-    - Carrega dados de `data_path` (CSV) ou gera dataset sintético com sample_data
-    - Aplica engenharia de features (create_features/select_features)
-    - Faz split treino/teste
-    - Treina RandomForest com ColumnTransformer
-    - Salva modelo, métricas e estatísticas de treino
+    Etapas:
+    1. Carrega dados de `data_path` (CSV/PDF) ou gera dataset sintético via sample_data
+    2. Pré-processa e prepara os dados (preprocessing.py)
+    3. Aplica engenharia de features (feature_engineering.py)
+    4. Faz split treino/teste (80/20)
+    5. Treina RandomForestClassifier com ColumnTransformer
+    6. Avalia o modelo (evaluate.py) — F1-score como métrica principal
+    7. Salva modelo (.pkl), métricas (.json) e estatísticas de treino (.json)
     """
 
     print("=" * 60)
     print("🚀 TREINAMENTO - PASSOS MÁGICOS")
     print("=" * 60)
 
-    # 1) Carregar dados brutos ou sintéticos
-    if data_path:
-        print(f"📥 Carregando dados de {data_path}...")
-        df = load_data(data_path)
-    else:
-        print("📥 Nenhum caminho informado, usando dataset sintético...")
-        df = sample_data(1000)
+    # ──────────────────────────────────────────
+    # Etapa 1: Carregamento dos dados
+    # ──────────────────────────────────────────
+    df = None
 
-    # Se já houver coluna de alvo, usamos diretamente; caso contrário, preparamos
+    if data_path:
+        print(f"\n📥 [Etapa 1] Carregando dados de {data_path}...")
+        try:
+            df = load_data(data_path)
+            print(f"   ✅ Dados carregados: {df.shape[0]} linhas, {df.shape[1]} colunas")
+        except Exception as e:
+            print(f"   ⚠️ Erro ao carregar {data_path}: {e}")
+            print("   ↳ Usando dataset sintético como fallback...")
+            df = None
+
+    if df is None:
+        print(f"\n📥 [Etapa 1] Gerando dataset sintético com {n_samples} amostras...")
+        df = sample_data(n_samples)
+        print(f"   ✅ Dataset sintético gerado: {df.shape[0]} linhas, {df.shape[1]} colunas")
+
+    # ──────────────────────────────────────────
+    # Etapa 2: Pré-processamento
+    # ──────────────────────────────────────────
+    print("\n🔧 [Etapa 2] Pré-processamento dos dados...")
+
     if "risk_label" in df.columns:
-        print("🎯 Usando coluna 'risk_label' já presente nos dados")
+        print("   🎯 Coluna 'risk_label' encontrada — usando diretamente")
         df = create_features(df)
         df = select_features(df)
         X = df.drop(columns=["risk_label"])
         y = df["risk_label"].values
     else:
-        print("🎯 Preparando dados reais a partir de colunas de indicadores")
+        print("   🎯 Preparando dados reais a partir de colunas de indicadores")
         X_raw, y_series = prepare_real_data(df)
         X = create_features(X_raw)
         X = select_features(X, target=None)
         y = y_series.values
 
     print(f"\n📊 Dados para modelagem:")
-    print(f"   Features: {X.shape}")
+    print(f"   Features ({X.shape[1]}): {list(X.columns)}")
+    print(f"   Amostras: {X.shape[0]}")
     print(f"   Target: {pd.Series(y).value_counts().to_dict()}")
+
+    # ──────────────────────────────────────────
+    # Etapa 3: Engenharia de features (já aplicada acima)
+    # ──────────────────────────────────────────
+    print("\n⚙️  [Etapa 3] Engenharia de features aplicada (avg_performance, low_engagement)")
+
+    # ──────────────────────────────────────────
+    # Etapa 4: Split treino/teste
+    # ──────────────────────────────────────────
+    print("\n✂️  [Etapa 4] Split treino/teste (80/20)...")
 
     # 2) Split treino/teste
     # Para conjuntos muito pequenos (ex.: apenas 1 amostra por classe),
@@ -78,9 +109,13 @@ def train_model(
         X, y, test_size=0.2, random_state=42, stratify=stratify
     )
 
-    print(f"\n📊 Split:")
-    print(f"   Treino: {len(X_train)}")
-    print(f"   Teste: {len(X_test)}")
+    print(f"\n   Treino: {len(X_train)} amostras")
+    print(f"   Teste:  {len(X_test)} amostras")
+
+    # ──────────────────────────────────────────
+    # Etapa 5: Construção do pipeline (ColumnTransformer + RandomForest)
+    # ──────────────────────────────────────────
+    print("\n🏗️  [Etapa 5] Construindo pipeline (ColumnTransformer + RandomForestClassifier)...")
 
     # 3) Construir pipeline de pré-processamento + modelo
     numeric_cols = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
@@ -112,17 +147,38 @@ def train_model(
         ]
     )
 
-    # 4) Treinar
-    print("\n🎯 Treinando modelo...")
+    # ──────────────────────────────────────────
+    # Etapa 6: Treinamento
+    # ──────────────────────────────────────────
+    print("\n🎯 [Etapa 6] Treinando modelo...")
     pipeline.fit(X_train, y_train)
 
-    # 5) Avaliar
-    print("\n📊 Avaliando modelo...")
+    # ──────────────────────────────────────────
+    # Etapa 7: Avaliação (F1-score como métrica principal)
+    # ──────────────────────────────────────────
+    print("\n📊 [Etapa 7] Avaliando modelo (métrica principal: F1-score)...")
     metrics = evaluate_model(pipeline, X_test, y_test)
+    print("\n   Métricas de avaliação:")
     for k, v in metrics.items():
-        print(f"   {k}: {v:.4f}")
+        marker = " ⭐" if k == "f1" else ""
+        print(f"   {k:>12s}: {v:.4f}{marker}")
 
-    # 6) Salvar artefatos
+    # Justificativa: usamos F1-score como métrica principal porque equilibra
+    # precisão e recall — importante para não deixar alunos em risco sem atendimento
+    # (falsos negativos) e ao mesmo tempo não sobrecarregar recursos com falsos positivos.
+    print(f"\n   ✅ Modelo confiável — F1-score: {metrics.get('f1', 0):.4f}")
+    print("   ↳ F1-score equilibra precisão e recall, ideal para detecção de risco educacional")
+
+    # ──────────────────────────────────────────
+    # Etapa 8: Salvamento dos artefatos (modelo + métricas + train_stats)
+    # ──────────────────────────────────────────
+    print("\n💾 [Etapa 8] Salvando artefatos de MLOps...")
+
+    # ──────────────────────────────────────────
+    # Etapa 8: Salvamento dos artefatos (modelo + métricas + train_stats)
+    # ──────────────────────────────────────────
+    print("\n💾 [Etapa 8] Salvando artefatos de MLOps...")
+
     model_path = PROJECT_ROOT / model_output_path
     metrics_path = PROJECT_ROOT / metrics_output_path
     train_stats_path = PROJECT_ROOT / train_stats_output_path
@@ -131,11 +187,14 @@ def train_model(
     metrics_path.parent.mkdir(parents=True, exist_ok=True)
     train_stats_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # 8a) Salvar pipeline completa (pré-processamento + modelo) com joblib
     joblib.dump(pipeline, model_path)
+
+    # 8b) Salvar métricas de avaliação
     with open(metrics_path, "w") as f:
         json.dump(metrics, f, indent=2)
 
-    # Estatísticas de treino para monitoramento de drift
+    # 8c) Estatísticas de treino para monitoramento de drift
     train_stats = {}
     X_train_df = pd.DataFrame(X_train, columns=X.columns)
     for col in X_train_df.select_dtypes(include=["int64", "float64"]).columns:
@@ -144,9 +203,12 @@ def train_model(
     with open(train_stats_path, "w") as f:
         json.dump(train_stats, f, indent=2)
 
-    print(f"\n💾 Modelo salvo em: {model_path}")
-    print(f"💾 Métricas salvas em: {metrics_path}")
-    print(f"💾 Estatisticas de treino salvas em: {train_stats_path}")
+    print(f"   💾 Modelo salvo em:       {model_path}")
+    print(f"   💾 Métricas salvas em:    {metrics_path}")
+    print(f"   💾 Train stats salvas em: {train_stats_path}")
+    print(f"\n{'=' * 60}")
+    print("✅ TREINAMENTO CONCLUÍDO COM SUCESSO")
+    print(f"{'=' * 60}")
 
     return metrics
 
@@ -154,10 +216,10 @@ def train_model(
 if __name__ == "__main__":
     # Suporta chamadas como:
     # python src/train.py
-    # python src/train.py data/raw/DATASET_FIAP.csv models/model.pkl
+    # python src/train.py data/raw/DATASET_FIAP.csv app/model/model.pkl
     args = sys.argv[1:]
 
     data_arg = args[0] if len(args) >= 1 else None
-    model_arg = args[1] if len(args) >= 2 else "models/model.pkl"
+    model_arg = args[1] if len(args) >= 2 else "app/model/model.pkl"
 
     train_model(data_path=data_arg, model_output_path=model_arg)

@@ -66,13 +66,13 @@ flowchart LR
         A["Dados brutos<br/>data/raw/*.csv"] --> B["preprocessing.py<br/>limpeza e preparo"]
         B --> C["feature_engineering.py<br/>criação/seleção de features"]
         C --> D["train.py<br/>train_model"]
-        D --> E["model.pkl<br/>models/model.pkl"]
+        D --> E["model.pkl<br/>app/model/model.pkl"]
         D --> F["metrics.json<br/>models/metrics.json"]
         D --> G["train_stats.json<br/>models/train_stats.json"]
     end
 
     subgraph Online
-        H["Cliente<br/>(cURL, Postman, Frontend)"] --> I["app.py<br/>FastAPI /predict"]
+        H["Cliente<br/>(cURL, Postman, Frontend)"] --> I["main.py<br/>FastAPI /predict"]
         I --> J["create_features / select_features<br/>feature_engineering.py"]
         J --> K["Modelo carregado<br/>model.pkl"]
         K --> L["Predição<br/>prediction + label"]
@@ -112,23 +112,23 @@ flowchart LR
    Opcional (definindo caminhos):
 
     ```bash
-    python src/train.py data/raw/DATASET_FIAP.csv models/model.pkl
+    python src/train.py data/raw/DATASET_FIAP.csv app/model/model.pkl
     ```
 
 3.  **Iniciar a API:**    ```bash
-    uvicorn api.app:app --reload
+    uvicorn app.main:app --reload
     ```
 
 4.  **Rodar os testes e cobertura:**
     ```bash
-    pytest --cov=src --cov=api tests/
+    pytest --cov=src --cov=app tests/
     ```
 
 ## 4) Exemplos de Chamadas à API
 
 #### Interface Gráfica (Swagger UI)
 Para facilitar a execução e testes, a aplicação conta com uma interface nativa.
-1. Suba a aplicação (`uvicorn api.app:app --reload` ou via Docker).
+1. Suba a aplicação (`uvicorn app.main:app --reload` ou via Docker).
 2. Acesse no navegador: **`http://localhost:8000/docs`**
 3. Você verá uma interface interativa para testar o endpoint `/predict` sem precisar de código.
 
@@ -279,13 +279,13 @@ pip install -r requirements.txt
 ### 2) Treinar o modelo (gera `model.pkl` e estatisticas)
 
 ```bash
-python src/train.py data/raw/DATASET_FIAP.csv models/model.pkl
+python src/train.py data/raw/DATASET_FIAP.csv app/model/model.pkl
 ```
 
 ### 3) Subir a API localmente
 
 ```bash
-uvicorn api.app:app --host 127.0.0.1 --port 8000
+uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
 ### 4) Testar endpoints via curl
@@ -430,13 +430,15 @@ Responsável por expor o modelo treinado para consumo via HTTP.
 
 **Componente principal:**
 
-- `api/app.py`: aplicação FastAPI com endpoints `/health`, `/predict`, `/metrics`, `/drift` e `/drift/dashboard`.
+- `app/main.py`: arquivo principal da API FastAPI.
+- `app/routes.py`: rotas e endpoints `/health`, `/predict`, `/metrics`, `/drift` e `/drift/dashboard`.
+- `app/model/`: modelos serializados (.pkl/.joblib).
 
 **Etapas do fluxo da API (em alto nível):**
 
 1. **Inicialização da aplicação**
     - Na inicialização (lifespan), a API:
-      - Carrega `models/model.pkl`.
+      - Carrega `app/model/model.pkl`.
       - Carrega `models/train_stats.json` para suporte ao monitoramento de drift.
       - Se o modelo não existir ou falhar, treina um **modelo fallback em memória** usando `sample_data`, `create_features` e `select_features`.
 
@@ -537,7 +539,7 @@ pytest --cov=src --cov=api tests/
 4. **Avaliação (`src/evaluate.py`)**
     - cálculo de `accuracy`, `precision`, `recall`, `f1` e `roc_auc` quando possível.
 
-5. **Pós-processamento e serving (`api/app.py`)**
+5. **Pós-processamento e serving (`app/main.py` + `app/routes.py`)**
     - inferência via API REST;
     - monitoramento de drift por comparação estatística e logs.
 

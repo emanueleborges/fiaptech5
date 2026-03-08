@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pandas as pd
 from fastapi.testclient import TestClient
 from src.preprocessing import clean_data
-from api.app import app
+from app.main import app
 
 client = TestClient(app)
 
@@ -47,13 +47,13 @@ def test_clean_data_removes_nulls():
     assert isinstance(cleaned_df, pd.DataFrame)
 
 def test_to_dataframe_empty():
-    from api.app import _to_dataframe
+    from app.routes import _to_dataframe
     df = _to_dataframe({})
     assert df.empty
 
 def test_api_predict_exception():
     # Simular erro interno enviando algo que cause erro em create_features se possível
     # Ou apenas forçar um erro se o modelo for None
-    with patch('api.app.model', None):
+    with patch('app.routes.model', None):
         response = client.post("/predict", json={"test": 1})
         assert response.status_code == 500
