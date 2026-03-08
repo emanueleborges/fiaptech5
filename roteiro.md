@@ -58,7 +58,25 @@ docker run --rm -p 8000:8000 passos-magicos-api
 
 **[Navegador — Swagger]**
 
-"No Swagger temos 9 endpoints em ordem de execução: treino, health, métricas, predição, monitoramento e drift."
+"No Swagger temos 9 endpoints organizados na ordem de execução do projeto:
+
+O primeiro é o POST /train, que executa a pipeline completa de treinamento do modelo diretamente pela API.
+
+Depois temos o GET /health, que retorna o status da aplicação — se o modelo está carregado e funcionando.
+
+O GET /metrics mostra as métricas de desempenho do último treino, como acurácia, F1-score e ROC-AUC.
+
+O POST /predict é o endpoint principal — recebe os dados de um aluno e retorna se ele está em risco ou não.
+
+O GET /monitoring traz os indicadores operacionais da API: total de requests, latência média, taxa de erro.
+
+O GET /monitoring/predictions retorna o histórico das últimas predições realizadas.
+
+O GET /drift mostra o status atual do monitoramento de drift — se os dados de entrada estão dentro do padrão.
+
+O GET /drift/history traz o histórico completo de alertas de drift.
+
+E por último, o GET /drift/dashboard abre um painel HTML visual com todas essas informações em tempo real."
 
 **[Predição ao vivo]**
 
