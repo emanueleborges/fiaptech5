@@ -21,13 +21,15 @@ A proposta do TechChallenge é clara: desenvolver uma solução inteligente, bas
 ## PARTE 2 — Solução Proposta (0:50 – 1:40)
 
 
-"Então, foi a gente cdfddduiu? Uma pipeline completa de Machine Learning — desde o tratamento dos dados brutos até o modelo rodando em produção com API REST.
+"Então, foi construido uma pipeline completa de Machine Learning — desde o tratamento dos dados brutos até o modelo rodando em produção com API REST.
 
-A arquitetura tem duas partes principais. A primeira é a Pipeline Offline, que cuida de todo o processamento dos dados, criação de variáveis, treinamento e avaliação do modelo. A segunda é a Pipeline Online, que é a API em si — feita com FastAPI — onde a gente recebe os dados de um aluno, aplica as mesmas transformações do treino, faz a predição em tempo real e ainda monitora se tá tendo drift nos dados.
+A arquitetura tem duas partes principais. A primeira é a Pipeline Offline, que cuida de todo o processamento dos dados, criação de variáveis, treinamento e avaliação do modelo. A segunda é a Pipeline Online, que é a API em si — feita com FastAPI — onde a gente recebe os dados de um aluno, aplica as mesmas transformações do treino, faz a predição em tempo real e ainda monitora se está tendo drift nos dados.
 
-No final, o modelo classifica o aluno em duas categorias: fora do grupo de risco ou em grupo de risco. E se os dados de entrada estiverem muito diferentes do que o modelo viu no treino, ele já dispara um alerta de drift.
+No final, o modelo classifica o aluno em duas categorias: fora do grupo de risco ou em grupo de risco. E se os dados de entrada estiverem muito diferentes do que o modelo treinou, ele já dispara um alerta de drift.
 
 Como métrica principal a gente escolheu o F1-score. Por quê? Porque ele equilibra precisão e recall. Isso é fundamental aqui: a gente não quer deixar passar aluno em risco sem identificar, mas também não pode gerar alerta demais e sobrecarregar a equipe."
+
+O F1-Score é uma métrica de desempenho em aprendizado de máquina que combina precisão e revogação (recall) em uma única média harmônica, variando de 0 a 1.
 
 **[Tela]** Mostrar o diagrama de arquitetura do README (fluxo Offline → Online).
 
