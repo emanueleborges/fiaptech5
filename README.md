@@ -210,3 +210,6 @@ Executada via `python src/train.py`:
 
 
 - Vídeo gerencial: https://www.youtube.com/watch?v=wzVXH9DMD48
+- https://github.com/emanueleborges/fiaptech5
+
+
