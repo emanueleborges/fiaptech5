@@ -1,6 +1,4 @@
-## Link do Vídeo
-
-https://youtu.be/X0Uqi9AohS0
+TECH CHALLENGE 5 - FIAP 
 
 # Datathon: Case Passos Mágicos - Previsão de Risco de Defasagem Escolar
 
@@ -8,17 +6,21 @@ Projeto de Machine Learning Engineering para estimar risco de defasagem escolar 
 
 ## 1) Visão Geral do Projeto
 
+
 **Objetivo de negócio**
 
 Identificar, de forma antecipada, estudantes com maior probabilidade de risco educacional para apoiar ações pedagógicas e psicopedagógicas mais assertivas.
+
 
 **Solução proposta**
 
 Pipeline completa de ML em Python: pré-processamento, engenharia de atributos, treinamento e avaliação de modelo supervisionado, serialização com `joblib`, serving via API FastAPI e monitoramento com logs e painel de drift.
 
+
 **Métrica principal de avaliação**
 
 `F1-score` (com apoio de `accuracy`, `precision`, `recall` e `roc_auc`). O F1-score equilibra precisão e recall, sendo adequado para reduzir falsos negativos de alunos em risco sem gerar excesso de falsos positivos.
+
 
 **Stack tecnológica**
 
@@ -31,6 +33,7 @@ Pipeline completa de ML em Python: pré-processamento, engenharia de atributos, 
 | Testes         | pytest + pytest-cov (90% cobertura) |
 | Empacotamento  | Docker                              |
 | Monitoramento  | logging JSON + dashboard de drift   |
+
 
 ## 2) Estrutura do Projeto
 
@@ -57,6 +60,7 @@ fiaptech5/
 ├── requirements.txt
 └── README.md
 ```
+
 
 ### 2.1) Diagrama da Arquitetura
 
@@ -93,6 +97,11 @@ flowchart LR
 docker build -t passos-magicos-api .
 docker run --rm -p 8000:8000 passos-magicos-api
 ```
+### Testes de Cobertura 
+
+```bash
+.venv/bin/python -m pytest --cov=src --cov=app tests/ -v --tb=short 
+```
 
 ### Localmente
 
@@ -111,33 +120,34 @@ pytest --cov=src --cov=app tests/ -v --tb=short
 
 Acesse a API: **http://localhost:8000/docs** (Swagger UI)
 
+
 ## 4) Endpoints da API
 
-| # | Método | Endpoint | Descrição |
-|---|--------|----------|-----------|
-| 1 | POST | `/train` | Executa pipeline completa de treinamento |
-| 2 | GET | `/health` | Status da aplicação e do modelo |
-| 3 | GET | `/metrics` | Métricas do último treino (accuracy, F1, ROC-AUC) |
-| 4 | POST | `/predict` | Predição de risco escolar |
-| 5 | GET | `/monitoring` | Indicadores operacionais (requests, latência, erros) |
-| 6 | GET | `/monitoring/predictions` | Histórico de predições recentes |
-| 7 | GET | `/drift` | Status do monitoramento de drift |
-| 8 | GET | `/drift/history` | Histórico de alertas de drift |
-| 9 | GET | `/drift/dashboard` | Painel HTML de monitoramento |
+| # | Método | Endpoint                     | Descrição                                             |
+|---|--------|------------------------------|-------------------------------------------------------|
+| 1 | POST   | `/train`                     | Executa pipeline completa de treinamento              |
+| 2 | GET    | `/health`                    | Status da aplicação e do modelo                       |
+| 3 | GET    | `/metrics`                   | Métricas do último treino (accuracy, F1, ROC-AUC)     |
+| 4 | POST   | `/predict`                   | Predição de risco escolar                             |
+| 5 | GET    | `/monitoring`                | Indicadores operacionais (requests, latência, erros)  |  
+| 6 | GET    | `/monitoring/predictions`    | Histórico de predições recentes                       |
+| 7 | GET    | `/drift`                     | Status do monitoramento de drift                      |
+| 8 | GET    | `/drift/history`             | Histórico de alertas de drift                         |
+| 9 | GET    | `/drift/dashboard`           | Painel HTML de monitoramento                          |
 
 ### Campos do `/predict`
 
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| INDE | float | Indicador de Desenvolvimento (0-10) |
-| IDA | float | Indicador de Defasagem em Alfabetização (0-10) |
-| IEG | float | Indicador de Engajamento (0-10) |
-| IAA | float | Indicador de Assiduidade e Atendimento (0-10) |
-| IPS | float | Indicador de Participação Social (0-10) |
-| IPP | float | Indicador de Postura Pedagógica (0-10) |
-| IPV | float | Indicador de Ponto de Virada (0-1) |
-| IAN | float | Indicador de Aprendizado em Novas Áreas (0-10) |
-| FASE | int | Fase do aluno |
+| Campo | Tipo | Descrição                                      |
+|-------|------|------------------------------------------------|
+| INDE | float | Indicador de Desenvolvimento (0-10)            |
+| IDA | float | Indicador de Defasagem em Alfabetização (0-10)  |
+| IEG | float | Indicador de Engajamento (0-10)                 |
+| IAA | float | Indicador de Assiduidade e Atendimento (0-10)   |
+| IPS | float | Indicador de Participação Social (0-10)         |
+| IPP | float | Indicador de Postura Pedagógica (0-10)          |
+| IPV | float | Indicador de Ponto de Virada (0-1)              |
+| IAN | float | Indicador de Aprendizado em Novas Áreas (0-10)  |
+| FASE | int | Fase do aluno                                    |
 | PEDRA | string | Pedra associada ("Quartzo", "Ametista", "Ágata", "Topázio") |
 
 ### Exemplos via cURL
@@ -196,4 +206,7 @@ Executada via `python src/train.py`:
 - Código-fonte modularizado neste repositório GitHub.
 - Documentação neste `README.md`.
 - API local: `http://localhost:8000` (Docker ou local).
-- Vídeo gerencial: https://youtu.be/X0Uqi9AohS0
+
+
+
+- Vídeo gerencial: https://www.youtube.com/watch?v=wzVXH9DMD48
